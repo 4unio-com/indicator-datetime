@@ -1,3 +1,15 @@
+indicator-datetime (0.0.5-0ubuntu1) maverick; urgency=low
+
+  * New upstream version:
+    - Making the timeformat configurable via translations and gsettings
+    - Updates the label for changing settings
+    - Add a calendar widget to the menu
+    - Make sure we get the new IDO version for the calendar menu item
+  * debian/control: 
+    - update build requirements to get glib and ido
+
+ -- Sebastien Bacher <seb128@ubuntu.com>  Thu, 22 Jul 2010 21:46:28 +0200
+
 indicator-datetime (0.0.4-0ubuntu1) maverick; urgency=low
 
   * New upstream release.
