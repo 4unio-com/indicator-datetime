@@ -1,3 +1,9 @@
+indicator-datetime (0.0.5-0ubuntu2) maverick; urgency=low
+
+  * debian/rules: use gnome.mk so a translation template is built (lp: #612540)
+
+ -- Sebastien Bacher <seb128@ubuntu.com>  Tue, 03 Aug 2010 12:44:50 +0200
+
 indicator-datetime (0.0.5-0ubuntu1) maverick; urgency=low
 
   * New upstream version:
