@@ -1,3 +1,10 @@
+indicator-datetime (0.0.6-0ubuntu4~ppa4) UNRELEASED; urgency=low
+
+  * Upstream Merge
+    * Generate the format string at init
+
+ -- Ted Gould <ted@ubuntu.com>  Fri, 03 Dec 2010 12:59:36 -0600
+
 indicator-datetime (0.0.6-0ubuntu3) maverick; urgency=low
 
   * Cherry-picked from upstream:
@@ -13,22 +20,6 @@ indicator-datetime (0.0.6-0ubuntu2) maverick; urgency=low
  -- Didier Roche <didrocks@ubuntu.com>  Wed, 22 Sep 2010 18:21:26 +0200
 
 indicator-datetime (0.0.6-0ubuntu1) maverick; urgency=low
-
-  * New upstream release.
-    * Refresh times on timezone change
-    * Update the date daily (lp: #614529)
-    * Fixing distcheck
-
- -- Ted Gould <ted@ubuntu.com>  Thu, 09 Sep 2010 13:10:10 -0500
-
-indicator-datetime (0.0.6-0ubuntu1~ppa2) maverick; urgency=low
-
-  * Upstream Merge
-    * Generate the format string at init
-
- -- Ted Gould <ted@ubuntu.com>  Fri, 03 Dec 2010 12:57:46 -0600
-
-indicator-datetime (0.0.6-0ubuntu1~ppa1) maverick; urgency=low
 
   * New upstream release.
     * Refresh times on timezone change
