@@ -1,9 +1,9 @@
-indicator-datetime (0.0.6-0ubuntu4~ppa4) UNRELEASED; urgency=low
+indicator-datetime (0.0.6-0ubuntu4~ppa4) maverick; urgency=low
 
   * Upstream Merge
     * Generate the format string at init
 
- -- Ted Gould <ted@ubuntu.com>  Fri, 03 Dec 2010 12:59:36 -0600
+ -- Ted Gould <ted@ubuntu.com>  Fri, 03 Dec 2010 13:01:06 -0600
 
 indicator-datetime (0.0.6-0ubuntu3) maverick; urgency=low
 
