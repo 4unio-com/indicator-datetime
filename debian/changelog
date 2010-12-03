@@ -1,3 +1,26 @@
+indicator-datetime (0.0.6-0ubuntu3) maverick; urgency=low
+
+  * Cherry-picked from upstream:
+    - Fix date string format (12/24h) not taken from translation (LP: #579134)
+
+ -- Didier Roche <didrocks@ubuntu.com>  Thu, 30 Sep 2010 16:09:41 +0200
+
+indicator-datetime (0.0.6-0ubuntu2) maverick; urgency=low
+
+  * Rebuild for libindicator ABI change (LP: #637692)
+  * debian/control: depends on latest libindicator-dev
+
+ -- Didier Roche <didrocks@ubuntu.com>  Wed, 22 Sep 2010 18:21:26 +0200
+
+indicator-datetime (0.0.6-0ubuntu1) maverick; urgency=low
+
+  * New upstream release.
+    * Refresh times on timezone change
+    * Update the date daily (lp: #614529)
+    * Fixing distcheck
+
+ -- Ted Gould <ted@ubuntu.com>  Thu, 09 Sep 2010 13:10:10 -0500
+
 indicator-datetime (0.0.6-0ubuntu1~ppa2) maverick; urgency=low
 
   * Upstream Merge
