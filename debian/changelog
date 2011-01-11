@@ -1,3 +1,9 @@
+indicator-datetime (0.1.90.is.0.0.6-0ubuntu2) UNRELEASED; urgency=low
+
+  * Merged gdbus and dbusmenu-glib-0.4 port
+
+ -- Ken VanDine <ken.vandine@canonical.com>  Tue, 11 Jan 2011 12:25:50 -0600
+
 indicator-datetime (0.1.90.is.0.0.6-0ubuntu1) natty; urgency=low
 
   * Uploading 0.0.6 again to superceed 0.1.90 which is still blocked on

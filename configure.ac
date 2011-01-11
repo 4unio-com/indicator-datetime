@@ -40,8 +40,8 @@ GIO_REQUIRED_VERSION=2.25.11
 INDICATOR_DISPLAY_OBJECTS=0.1.10
 
 PKG_CHECK_MODULES(INDICATOR, indicator >= $INDICATOR_REQUIRED_VERSION
-                             dbusmenu-glib >= $DBUSMENUGLIB_REQUIRED_VERSION
-                             dbusmenu-gtk >= $DBUSMENUGTK_REQUIRED_VERSION
+                             dbusmenu-glib-0.4 >= $DBUSMENUGLIB_REQUIRED_VERSION
+                             dbusmenu-gtk-0.4 >= $DBUSMENUGTK_REQUIRED_VERSION
                              libido-0.1 >= $INDICATOR_DISPLAY_OBJECTS
                              gio-2.0 >= $GIO_REQUIRED_VERSION)
 
