@@ -1,3 +1,9 @@
+indicator-datetime (0.0.6-0ubuntu3~unity2d1) lucid; urgency=low
+
+  * Backport from Maverick
+
+ -- Alex Chiang <achiang@canonical.com>  Tue, 08 Feb 2011 16:41:20 -0700
+
 indicator-datetime (0.0.6-0ubuntu3) maverick; urgency=low
 
   * Cherry-picked from upstream:
