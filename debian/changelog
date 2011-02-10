@@ -1,3 +1,9 @@
+indicator-datetime (0.0.6-0ubuntu3~unity2d2) lucid; urgency=low
+
+  * debian/control: Add Vcs-Bzr link
+
+ -- Alex Chiang <achiang@canonical.com>  Thu, 10 Feb 2011 10:24:25 -0700
+
 indicator-datetime (0.0.6-0ubuntu3~unity2d1) lucid; urgency=low
 
   * Backport from Maverick

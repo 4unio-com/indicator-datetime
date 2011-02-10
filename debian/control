@@ -11,6 +11,7 @@ Build-Depends: cdbs,
                libglib2.0-dev (>= 2.25.0),
                libido-0.1-dev (>= 0.1.10)
 Standards-Version: 3.8.4
+Vcs-Bzr: http://code.launchpad.net/~oem-solutions-group/unity-2d/indicator-datetime
 Homepage: https://launchpad.net/indicator-datetime
 
 Package: indicator-datetime
