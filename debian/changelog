@@ -1,3 +1,11 @@
+indicator-datetime (0.0.6-0ubuntu3~unity2d3) lucid; urgency=low
+
+  * Since this pkg is a backport from maverick, it needs to provide 
+    maverick translations to preempt those of lucid lang pack. So, this
+    pkg now contains maverick translations of 10 Feb 2011.
+
+ -- Kyle Nitzsche <kyle.nitzsche@canonical.com>  Thu, 10 Feb 2011 13:24:23 -0500
+
 indicator-datetime (0.0.6-0ubuntu3~unity2d2) lucid; urgency=low
 
   * debian/control: Add Vcs-Bzr link
