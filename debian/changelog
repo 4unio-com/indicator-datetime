@@ -1,9 +1,9 @@
-indicator-datetime (0.0.6-0ubuntu3~unity2d4) UNRELEASED; urgency=low
+indicator-datetime (0.0.6-0ubuntu3~unity2d4) lucid; urgency=low
 
   * src/datetime-service.c: backport upstream fix to always show calendar
     even if evolution is not installed (LP: #793508)
 
- -- Alex Chiang <achiang@canonical.com>  Fri, 10 Jun 2011 11:52:32 -0600
+ -- Alex Chiang <achiang@canonical.com>  Fri, 10 Jun 2011 11:53:29 -0600
 
 indicator-datetime (0.0.6-0ubuntu3~unity2d3) lucid; urgency=low
 
