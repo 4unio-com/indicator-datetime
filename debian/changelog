@@ -1,3 +1,9 @@
+indicator-datetime (0.0.6-0ubuntu3~unity2d5) UNRELEASED; urgency=low
+
+  * src/datetime-service.c: force calendar to always show (LP: #793508)
+
+ -- Alex Chiang <achiang@canonical.com>  Tue, 14 Jun 2011 10:32:04 -0600
+
 indicator-datetime (0.0.6-0ubuntu3~unity2d4) lucid; urgency=low
 
   * src/datetime-service.c: backport upstream fix to always show calendar
