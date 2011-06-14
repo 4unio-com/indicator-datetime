@@ -275,8 +275,8 @@ menu_visible_notfy_cb(GtkWidget * menu, G_GNUC_UNUSED GParamSpec *pspec, gpointe
 	// we should only react if we're currently visible
 	gboolean visible;
 	g_object_get(G_OBJECT(menu), "visible", &visible, NULL);
-	if (visible) return;
-	g_debug("notify visible menu hidden, resetting date");
+	if (!visible) return;
+	g_debug("notify visible menu shown, resetting date");
 	
 	time_t curtime;
 	
