@@ -1260,7 +1260,7 @@ new_appointment_item (DbusmenuMenuitem * newitem, DbusmenuMenuitem * parent, Dbu
 
 	mi_data->gmi = gtk_menu_item_new();
 
-	GtkWidget * hbox = gtk_hbox_new(FALSE, 4);
+	GtkWidget * box = gtk_box_new(FALSE, 4);
 
 	/* Icon, probably someone's face or avatar on an IM */
 	mi_data->icon = gtk_image_new();
@@ -1292,7 +1292,7 @@ new_appointment_item (DbusmenuMenuitem * newitem, DbusmenuMenuitem * parent, Dbu
 		}
 	}
 	gtk_misc_set_alignment(GTK_MISC(mi_data->icon), 0.0, 0.5);
-	gtk_box_pack_start(GTK_BOX(hbox), mi_data->icon, FALSE, FALSE, 0);
+	gtk_box_pack_start(GTK_BOX(box), mi_data->icon, FALSE, FALSE, 0);
 	gtk_widget_show(mi_data->icon);
 
 	/* Label, probably a username, chat room or mailbox name */
@@ -1305,7 +1305,7 @@ new_appointment_item (DbusmenuMenuitem * newitem, DbusmenuMenuitem * parent, Dbu
 	gtk_widget_set_size_request(GTK_WIDGET(mi_data->label), length, -1); // Set the min size in pixels
 	
 	gtk_label_set_ellipsize(GTK_LABEL(mi_data->label), PANGO_ELLIPSIZE_END);
-	gtk_box_pack_start(GTK_BOX(hbox), mi_data->label, TRUE, TRUE, 0);
+	gtk_box_pack_start(GTK_BOX(box), mi_data->label, TRUE, TRUE, 0);
 	gtk_widget_show(mi_data->label);
 
 	/* Usually either the time or the count on the individual
@@ -1313,11 +1313,11 @@ new_appointment_item (DbusmenuMenuitem * newitem, DbusmenuMenuitem * parent, Dbu
 	mi_data->right = gtk_label_new(dbusmenu_menuitem_property_get(newitem, APPOINTMENT_MENUITEM_PROP_RIGHT));
 	gtk_size_group_add_widget(self->priv->indicator_right_group, mi_data->right);
 	gtk_misc_set_alignment(GTK_MISC(mi_data->right), 1.0, 0.5);
-	gtk_box_pack_start(GTK_BOX(hbox), mi_data->right, FALSE, FALSE, 0);
+	gtk_box_pack_start(GTK_BOX(box), mi_data->right, FALSE, FALSE, 0);
 	gtk_widget_show(mi_data->right);
 
-	gtk_container_add(GTK_CONTAINER(mi_data->gmi), hbox);
-	gtk_widget_show(hbox);
+	gtk_container_add(GTK_CONTAINER(mi_data->gmi), box);
+	gtk_widget_show(box);
 
 	dbusmenu_gtkclient_newitem_base(DBUSMENU_GTKCLIENT(client), newitem, GTK_MENU_ITEM(mi_data->gmi), parent);
 
@@ -1470,12 +1470,12 @@ new_timezone_item(DbusmenuMenuitem * newitem,
 	gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(mi_data->gmi),
 		dbusmenu_menuitem_property_get_bool(newitem, TIMEZONE_MENUITEM_PROP_RADIO));
 
-	GtkWidget * hbox = gtk_hbox_new(FALSE, 4);
+	GtkWidget * box = gtk_box_new(FALSE, 4);
 
   	/* Label, probably a username, chat room or mailbox name */
 	mi_data->label = gtk_label_new("");
 	gtk_misc_set_alignment(GTK_MISC(mi_data->label), 0.0, 0.5);
-	gtk_box_pack_start(GTK_BOX(hbox), mi_data->label, TRUE, TRUE, 0);
+	gtk_box_pack_start(GTK_BOX(box), mi_data->label, TRUE, TRUE, 0);
 	gtk_widget_show(mi_data->label);
 
 	/* Usually either the time or the count on the individual
@@ -1483,13 +1483,13 @@ new_timezone_item(DbusmenuMenuitem * newitem,
 	mi_data->right = gtk_label_new("");
 	gtk_size_group_add_widget(self->priv->indicator_right_group, mi_data->right);
 	gtk_misc_set_alignment(GTK_MISC(mi_data->right), 1.0, 0.5);
-	gtk_box_pack_start(GTK_BOX(hbox), mi_data->right, FALSE, FALSE, 0);
+	gtk_box_pack_start(GTK_BOX(box), mi_data->right, FALSE, FALSE, 0);
 	gtk_widget_show(mi_data->right);
 
 	timezone_update_labels(mi_data);
 
-	gtk_container_add(GTK_CONTAINER(mi_data->gmi), hbox);
-	gtk_widget_show(hbox);
+	gtk_container_add(GTK_CONTAINER(mi_data->gmi), box);
+	gtk_widget_show(box);
 
 	dbusmenu_gtkclient_newitem_base(DBUSMENU_GTKCLIENT(client), newitem, GTK_MENU_ITEM(mi_data->gmi), parent);
 

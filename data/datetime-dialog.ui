@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <interface>
   <requires lib="gtk+" version="2.24"/>
-  <!-- interface-naming-policy project-wide -->
   <object class="GtkAdjustment" id="dateAdjustment">
     <property name="upper">1.8446744073709552e+19</property>
     <property name="step_increment">86400</property>
@@ -15,15 +14,14 @@
     <property name="destroy_with_parent">True</property>
     <property name="icon_name">time-admin</property>
     <child>
-      <object class="GtkVBox" id="vbox1">
+      <object class="GtkBox" id="box10">
         <property name="visible">True</property>
         <property name="can_focus">False</property>
+        <property name="orientation">vertical</property>
         <child>
           <object class="GtkScrolledWindow" id="scrolledwindow1">
             <property name="visible">True</property>
             <property name="can_focus">True</property>
-            <property name="hscrollbar_policy">automatic</property>
-            <property name="vscrollbar_policy">automatic</property>
             <child>
               <object class="GtkTreeView" id="locationsView">
                 <property name="visible">True</property>
@@ -31,6 +29,9 @@
                 <property name="model">locationsStore</property>
                 <property name="reorderable">True</property>
                 <property name="search_column">0</property>
+                <child internal-child="selection">
+                  <object class="GtkTreeSelection" id="treeview-selection1"/>
+                </child>
               </object>
             </child>
           </object>
@@ -52,57 +53,48 @@
           </packing>
         </child>
         <child>
-          <object class="GtkHBox" id="hbox10">
+          <object class="GtkToolbar" id="toolbar1">
             <property name="visible">True</property>
             <property name="can_focus">False</property>
+            <property name="icon_size">1</property>
             <child>
-              <object class="GtkButton" id="addButton">
+              <object class="GtkToolButton" id="addButton">
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="receives_default">True</property>
                 <property name="use_action_appearance">False</property>
+                <property name="label" translatable="yes">Add</property>
+                <property name="use_underline">True</property>
+                <property name="icon_name">list-add-symbolic</property>
                 <child internal-child="accessible">
                   <object class="AtkObject" id="addButton-atkobject">
                     <property name="AtkObject::accessible-description" translatable="yes">Add a Location…</property>
                   </object>
                 </child>
-                <child>
-                  <object class="GtkImage" id="addImage">
-                    <property name="visible">True</property>
-                    <property name="can_focus">False</property>
-                    <property name="stock">gtk-add</property>
-                  </object>
-                </child>
               </object>
               <packing>
                 <property name="expand">False</property>
-                <property name="fill">True</property>
-                <property name="position">0</property>
+                <property name="homogeneous">True</property>
               </packing>
             </child>
             <child>
-              <object class="GtkButton" id="removeButton">
+              <object class="GtkToolButton" id="removeButton">
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="receives_default">True</property>
                 <property name="use_action_appearance">False</property>
+                <property name="label" translatable="yes">Remove</property>
+                <property name="use_underline">True</property>
+                <property name="icon_name">list-remove-symbolic</property>
                 <child internal-child="accessible">
                   <object class="AtkObject" id="removeButton-atkobject">
                     <property name="AtkObject::accessible-description" translatable="yes">Remove This Location</property>
                   </object>
                 </child>
-                <child>
-                  <object class="GtkImage" id="removeImage">
-                    <property name="visible">True</property>
-                    <property name="can_focus">False</property>
-                    <property name="stock">gtk-remove</property>
-                  </object>
-                </child>
               </object>
               <packing>
                 <property name="expand">False</property>
-                <property name="fill">True</property>
-                <property name="position">1</property>
+                <property name="homogeneous">True</property>
               </packing>
             </child>
           </object>
@@ -123,7 +115,7 @@
       <column type="gchararray"/>
       <!-- column-name Zone -->
       <column type="gchararray"/>
-      <!-- column-name Visible Name -->
+      <!-- column-name Visible -->
       <column type="gchararray"/>
       <!-- column-name Icon -->
       <column type="gchararray"/>
@@ -142,20 +134,23 @@
         <property name="visible">True</property>
         <property name="can_focus">True</property>
         <child>
-          <object class="GtkVBox" id="timeDateBox">
+          <object class="GtkBox" id="timeDateBox">
             <property name="visible">True</property>
             <property name="can_focus">False</property>
             <property name="border_width">12</property>
+            <property name="orientation">vertical</property>
             <property name="spacing">6</property>
             <child>
-              <object class="GtkVBox" id="timeDateOptions">
+              <object class="GtkBox" id="timeDateOptions">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
+                <property name="orientation">vertical</property>
                 <property name="spacing">12</property>
                 <child>
-                  <object class="GtkVBox" id="vbox6">
+                  <object class="GtkBox" id="box1">
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
+                    <property name="orientation">vertical</property>
                     <property name="spacing">6</property>
                     <child>
                       <object class="GtkAspectFrame" id="mapBox">
@@ -175,7 +170,7 @@
                       </packing>
                     </child>
                     <child>
-                      <object class="GtkHBox" id="hbox1">
+                      <object class="GtkBox" id="box2">
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
                         <property name="spacing">6</property>
@@ -230,7 +225,7 @@
                     <property name="column_spacing">6</property>
                     <property name="row_spacing">6</property>
                     <child>
-                      <object class="GtkHBox" id="hbox2">
+                      <object class="GtkBox" id="box3">
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
                         <property name="spacing">6</property>
@@ -290,12 +285,12 @@
                       </packing>
                     </child>
                     <child>
-                      <object class="GtkHBox" id="manualOptions">
+                      <object class="GtkBox" id="manualOptions">
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
                         <property name="spacing">12</property>
                         <child>
-                          <object class="GtkHBox" id="hbox8">
+                          <object class="GtkBox" id="box4">
                             <property name="visible">True</property>
                             <property name="can_focus">False</property>
                             <property name="spacing">6</property>
@@ -323,7 +318,7 @@
                           </packing>
                         </child>
                         <child>
-                          <object class="GtkHBox" id="hbox9">
+                          <object class="GtkBox" id="box5">
                             <property name="visible">True</property>
                             <property name="can_focus">False</property>
                             <property name="spacing">6</property>
@@ -428,10 +423,11 @@
             <property name="yalign">0</property>
             <property name="yscale">0</property>
             <child>
-              <object class="GtkVBox" id="clockBox">
+              <object class="GtkBox" id="clockBox">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
                 <property name="border_width">12</property>
+                <property name="orientation">vertical</property>
                 <property name="spacing">12</property>
                 <child>
                   <object class="GtkCheckButton" id="showClockCheck">
@@ -451,14 +447,15 @@
                   </packing>
                 </child>
                 <child>
-                  <object class="GtkHBox" id="clockOptions">
+                  <object class="GtkBox" id="clockOptions">
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
                     <property name="homogeneous">True</property>
                     <child>
-                      <object class="GtkVBox" id="vbox2">
+                      <object class="GtkBox" id="box6">
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
+                        <property name="orientation">vertical</property>
                         <property name="spacing">6</property>
                         <child>
                           <object class="GtkLabel" id="label3">
@@ -508,9 +505,10 @@
                           </packing>
                         </child>
                         <child>
-                          <object class="GtkVBox" id="vbox5">
+                          <object class="GtkBox" id="box7">
                             <property name="visible">True</property>
                             <property name="can_focus">False</property>
+                            <property name="orientation">vertical</property>
                             <child>
                               <object class="GtkRadioButton" id="show12HourRadio">
                                 <property name="label" translatable="yes">_12-hour time</property>
@@ -579,9 +577,10 @@
                       </packing>
                     </child>
                     <child>
-                      <object class="GtkVBox" id="vbox3">
+                      <object class="GtkBox" id="box8">
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
+                        <property name="orientation">vertical</property>
                         <property name="spacing">6</property>
                         <child>
                           <object class="GtkLabel" id="label4">
@@ -622,7 +621,7 @@
                             <property name="yscale">0</property>
                             <property name="left_padding">24</property>
                             <child>
-                              <object class="GtkVBox" id="vbox4">
+                              <object class="GtkBox" id="box9">
                                 <property name="visible">True</property>
                                 <property name="can_focus">False</property>
                                 <property name="spacing">6</property>
