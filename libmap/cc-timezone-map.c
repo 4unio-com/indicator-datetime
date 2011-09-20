@@ -732,23 +732,26 @@ cc_timezone_map_draw (GtkWidget *widget,
   CcTimezoneMapPrivate *priv = CC_TIMEZONE_MAP (widget)->priv;
   GdkPixbuf *hilight, *orig_hilight, *pin;
   GtkAllocation alloc;
+  GtkStateFlags state;
+  GtkStyleContext *context;
+  GdkRGBA rgba;
   gchar *file;
   GError *err = NULL;
   gdouble pointx, pointy;
   gdouble alpha = 1.0;
-  GtkStyle *style;
   char buf[16];
 
   gtk_widget_get_allocation (widget, &alloc);
 
-  style = gtk_widget_get_style (widget);
+  state = gtk_widget_get_state_flags (widget);
 
   /* Check if insensitive */
-  if (gtk_widget_get_state (widget) == GTK_STATE_INSENSITIVE)
+  if (state & GTK_STATE_FLAG_INSENSITIVE)
     alpha = 0.5;
 
   /* paint background */
-  gdk_cairo_set_source_color (cr, &style->bg[gtk_widget_get_state (widget)]);
+  gtk_style_context_get_color (context, state, &rgba);
+  gdk_cairo_set_source_rgba (cr, &rgba);
   cairo_paint (cr);
   gdk_cairo_set_source_pixbuf (cr, priv->background, 0, 0);
   cairo_paint_with_alpha (cr, alpha);
