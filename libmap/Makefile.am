@@ -55,7 +55,7 @@ AM_CPPFLAGS =						\
 
 noinst_PROGRAMS = test-timezone
 
-test_timezone_SOURCES = test-timezone.c tz.c tz.h
+test_timezone_SOURCES = test-timezone.c tz.c tz.h cc-timezone-map.h cc-timezone-map.c
 test_timezone_LDADD = $(LIBMAP_LIBS)
 test_timezone_CFLAGS = $(LIBMAP_CFLAGS)
 

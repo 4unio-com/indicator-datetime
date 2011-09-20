@@ -25,6 +25,7 @@
 
 #include "cc-timezone-map.h"
 #include <math.h>
+#include <string.h>
 #include "tz.h"
 
 G_DEFINE_TYPE (CcTimezoneMap, cc_timezone_map, GTK_TYPE_WIDGET)
@@ -50,10 +51,10 @@ struct _CcTimezoneMapPrivate
   GdkPixbuf *background;
   GdkPixbuf *color_map;
   GdkPixbuf *olsen_map;
-
+ 
   guchar *visible_map_pixels;
   gint visible_map_rowstride;
-
+ 
   gint olsen_map_channels;
   guchar *olsen_map_pixels;
   gint olsen_map_rowstride;
@@ -64,7 +65,6 @@ struct _CcTimezoneMapPrivate
 
   TzDB *tzdb;
   TzLocation *location;
-  GHashTable *alias_db;
 };
 
 enum
@@ -570,12 +570,6 @@ cc_timezone_map_dispose (GObject *object)
       priv->visible_map_rowstride = 0;
     }
 
-  if (priv->alias_db)
-    {
-      g_hash_table_destroy (priv->alias_db);
-      priv->alias_db = NULL;
-    }
-
   if (priv->watermark)
     {
       g_free (priv->watermark);
@@ -686,11 +680,10 @@ cc_timezone_map_realize (GtkWidget *widget)
   window = gdk_window_new (gtk_widget_get_parent_window (widget), &attr,
                            GDK_WA_X | GDK_WA_Y);
 
-  gdk_window_set_user_data (window, widget);
-
   cursor = gdk_cursor_new (GDK_HAND2);
   gdk_window_set_cursor (window, cursor);
 
+  gdk_window_set_user_data (window, widget);
   gtk_widget_set_window (widget, window);
 }
 
@@ -773,10 +766,6 @@ cc_timezone_map_draw (GtkWidget *widget,
     cairo_stroke(cr);
   }
 
-  if (!priv->location) {
-    return TRUE;
-  }
-
   /* paint hilight */
   file = g_strdup_printf (DATADIR "/timezone_%s.png",
                           g_ascii_formatd (buf, sizeof (buf),
@@ -813,16 +802,23 @@ cc_timezone_map_draw (GtkWidget *widget,
       g_clear_error (&err);
     }
 
-  pointx = convert_longtitude_to_x (priv->location->longitude, alloc.width);
-  pointy = convert_latitude_to_y (priv->location->latitude, alloc.height);
+  if (priv->location)
+    {
+      pointx = convert_longtitude_to_x (priv->location->longitude, alloc.width);
+      pointy = convert_latitude_to_y (priv->location->latitude, alloc.height);
 
-  if (pointy > alloc.height)
-    pointy = alloc.height;
+      if (pointy > alloc.height)
+        pointy = alloc.height;
+
+      if (pin)
+        {
+          gdk_cairo_set_source_pixbuf (cr, pin, pointx - 8, pointy - 14);
+          cairo_paint_with_alpha (cr, alpha);
+        }
+    }
 
   if (pin)
     {
-      gdk_cairo_set_source_pixbuf (cr, pin, pointx - 8, pointy - 14);
-      cairo_paint_with_alpha (cr, alpha);
       g_object_unref (pin);
     }
 
@@ -964,6 +960,7 @@ button_press_event (GtkWidget      *widget,
 {
   TzLocation * loc = get_loc_for_xy (widget, event->x, event->y);
   set_location (CC_TIMEZONE_MAP (widget), loc);
+
   return TRUE;
 }
 
@@ -972,57 +969,6 @@ state_flags_changed (GtkWidget *widget)
 {
   // To catch sensitivity changes
   gtk_widget_queue_draw (widget);
-}
-
-static void
-load_backward_tz (CcTimezoneMap *self)
-{
-  GError *error = NULL;
-  char **lines, *contents;
-  guint i;
-
-  self->priv->alias_db = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, g_free);
-
-  if (g_file_get_contents (GNOMECC_DATA_DIR "/datetime/backward", &contents, NULL, &error) == FALSE)
-    {
-      g_warning ("Failed to load 'backward' file: %s", error->message);
-      return;
-    }
-  lines = g_strsplit (contents, "\n", -1);
-  g_free (contents);
-  for (i = 0; lines[i] != NULL; i++)
-    {
-      char **items;
-      guint j;
-      char *real, *alias;
-
-      if (g_ascii_strncasecmp (lines[i], "Link\t", 5) != 0)
-        continue;
-
-      items = g_strsplit (lines[i], "\t", -1);
-      real = NULL;
-      alias = NULL;
-      /* Skip the "Link<tab>" part */
-      for (j = 1; items[j] != NULL; j++)
-        {
-          if (items[j][0] == '\0')
-            continue;
-          if (real == NULL)
-            {
-              real = items[j];
-              continue;
-            }
-          alias = items[j];
-          break;
-        }
-
-      if (real == NULL || alias == NULL)
-        g_warning ("Could not parse line: %s", lines[i]);
-
-      g_hash_table_insert (self->priv->alias_db, g_strdup (alias), g_strdup (real));
-      g_strfreev (items);
-    }
-  g_strfreev (lines);
 }
 
 static void
@@ -1070,8 +1016,6 @@ cc_timezone_map_init (CcTimezoneMap *self)
                     NULL);
   g_signal_connect (self, "state-flags-changed", G_CALLBACK (state_flags_changed),
                     NULL);
-
-  load_backward_tz (self);
 }
 
 CcTimezoneMap *
@@ -1080,17 +1024,19 @@ cc_timezone_map_new (void)
   return g_object_new (CC_TYPE_TIMEZONE_MAP, NULL);
 }
 
-void
+gboolean
 cc_timezone_map_set_timezone (CcTimezoneMap *map,
                               const gchar   *timezone)
 {
   GPtrArray *locations;
   guint i;
   char *real_tz;
+  gboolean ret;
 
-  real_tz = g_hash_table_lookup (map->priv->alias_db, timezone);
+  real_tz = tz_info_get_clean_name (map->priv->tzdb, timezone);
 
   locations = tz_get_locations (map->priv->tzdb);
+  ret = FALSE;
 
   for (i = 0; i < locations->len; i++)
     {
@@ -1099,18 +1045,17 @@ cc_timezone_map_set_timezone (CcTimezoneMap *map,
       if (!g_strcmp0 (loc->zone, real_tz ? real_tz : timezone))
         {
           set_location (map, loc);
+          ret = TRUE;
           break;
         }
     }
 
-  gtk_widget_queue_draw (GTK_WIDGET (map));
-}
+  if (ret)
+    gtk_widget_queue_draw (GTK_WIDGET (map));
 
-void
-cc_timezone_map_set_coords (CcTimezoneMap *map, gdouble lon, gdouble lat)
-{
-  const gchar * zone = cc_timezone_map_get_timezone_at_coords (map, lon, lat);
-  cc_timezone_map_set_timezone (map, zone);
+  g_free (real_tz);
+
+  return ret;
 }
 
 const gchar *

@@ -72,10 +72,8 @@ CcTimezoneMap *cc_timezone_map_new (void);
 
 void cc_timezone_map_set_watermark (CcTimezoneMap * map,
                                     const gchar * watermark);
-void cc_timezone_map_set_timezone (CcTimezoneMap *map,
-                                   const gchar   *timezone);
-void cc_timezone_map_set_coords (CcTimezoneMap *map,
-                                 gdouble lon, gdouble lat);
+gboolean cc_timezone_map_set_timezone (CcTimezoneMap *map,
+                                       const gchar   *timezone);
 const gchar * cc_timezone_map_get_timezone_at_coords (CcTimezoneMap *map,
                                                       gdouble lon, gdouble lat);
 TzLocation * cc_timezone_map_get_location (CcTimezoneMap *map);
