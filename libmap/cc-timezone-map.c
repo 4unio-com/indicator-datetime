@@ -796,6 +796,13 @@ cc_timezone_map_draw (GtkWidget *widget,
       g_object_unref (orig_hilight);
     }
 
+  /* Don't draw the pin for non-geographical locations */
+  if (priv->location &&
+      g_str_has_prefix (priv->location->zone, "Etc/"))
+    {
+      return TRUE;
+    }
+
   /* load pin icon */
   pin = gdk_pixbuf_new_from_file (DATADIR "/pin.png", &err);
 

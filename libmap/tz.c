@@ -51,6 +51,7 @@ tz_load_db (void)
 	TzDB *tz_db;
 	FILE *tzfile;
 	char buf[4096];
+	gint i;
 
 	tz_data_file = tz_data_file_get ();
 	if (!tz_data_file) {
@@ -119,7 +120,35 @@ tz_load_db (void)
 	}
 	
 	fclose (tzfile);
-	
+
+	/* Add the Etc/GMT offsets, except Etc/GMT+12, which
+	 * is not inhabited, see:
+	 * http://en.wikipedia.org/wiki/GMT-12
+	 *
+	 * Are you confused about the above? So was I.
+	 *
+	 * From tzdata
+	 * We use POSIX-style signs in the Zone names and the output abbreviations,
+	 * even though this is the opposite of what many people expect.
+	 * POSIX has positive signs west of Greenwich, but many people expect
+	 * positive signs east of Greenwich.
+	 * etc.
+	 */
+	for (i = -14; i <= 12; i++) {
+		TzLocation *loc;
+
+		if (i == 12)
+			continue;
+
+		loc = g_new0 (TzLocation, 1);
+		if (i != 0)
+			loc->zone = g_strdup_printf ("Etc/GMT%c%d", i < 0 ? '-' : '+', abs(i));
+		else
+			loc->zone = g_strdup ("Etc/GMT");
+		loc->country = g_strdup ("XX");
+		g_ptr_array_add (tz_db->locations, (gpointer) loc);
+	}
+
 	/* now sort by country */
 	sort_locations_by_country (tz_db->locations);
 	
