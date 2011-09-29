@@ -117,6 +117,30 @@ PKG_CHECK_MODULES(LIBMAP, gio-2.0 >= $GIO_REQUIRED_VERSION
                           gtk+-3.0 >= $GTK3_REQUIRED_VERSION)
 
 ###########################
+# Check for timerfd support
+###########################
+AC_CACHE_CHECK([for timerfd_create(2) system call],
+               [gnome_cv_timerfd],
+               [AC_COMPILE_IFELSE([
+                     AC_LANG_PROGRAM([[
+#include <sys/timerfd.h>
+#include <unistd.h>
+]],[[
+int
+main (void)
+{
+  timerfd_create (CLOCK_MONOTONIC, TFD_CLOEXEC);
+  return 0;
+}
+]])],
+                     [gnome_cv_timerfd=yes],
+                     [gnome_cv_timerfd=no]]))
+if test x"$gnome_cv_timerfd" = x"yes"; then
+  AC_DEFINE([HAVE_TIMERFD], [1],
+            [we have the timerfd_create(2) system call])
+fi
+
+###########################
 # Grab the GSettings Macros
 ###########################
 

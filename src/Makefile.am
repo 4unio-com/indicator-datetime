@@ -31,6 +31,8 @@ datetimelib_LTLIBRARIES = libdatetime.la
 libdatetime_la_SOURCES = \
 	gen-datetime-service.xml.h \
 	dbus-shared.h \
+	gnome-datetime-source.c \
+	gnome-datetime-source.h \
 	gnome-wall-clock.c \
 	gnome-wall-clock.h \
 	settings-shared.h \
