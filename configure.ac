@@ -60,6 +60,7 @@ INDICATOR_REQUIRED_VERSION=0.3.19
 DBUSMENUGLIB_REQUIRED_VERSION=0.1.1
 DBUSMENUGTK_REQUIRED_VERSION=0.3.94
 GIO_REQUIRED_VERSION=2.25.11
+GSETTINGS_DESKTOP_SCHEMAS_REQUIRED=3.1.4
 INDICATOR_DISPLAY_OBJECTS=0.2.2
 GEOCLUE_REQUIRED_VERSION=0.12.0
 ECAL_REQUIRED_VERSION=2.30
@@ -74,6 +75,7 @@ GCONF_REQUIRED_VERSION=2.31
 AS_IF([test "x$with_gtk" = x3],
     [PKG_CHECK_MODULES(INDICATOR, indicator3-0.4 >= $INDICATOR_REQUIRED_VERSION
                                   glib-2.0 >= $GLIB_REQUIRED_VERSION
+                                  gsettings-desktop-schemas >= $GSETTINGS_DESKTOP_SCHEMAS_REQUIRED
                                   dbusmenu-glib-0.4 >= $DBUSMENUGLIB_REQUIRED_VERSION
                                   dbusmenu-gtk3-0.4 >= $DBUSMENUGTK_REQUIRED_VERSION
                                   libido3-0.1 >= $INDICATOR_DISPLAY_OBJECTS)
@@ -89,6 +91,7 @@ AS_IF([test "x$with_gtk" = x3],
 )
 
 PKG_CHECK_MODULES(SERVICE, indicator3-0.4 >= $INDICATOR_REQUIRED_VERSION
+                           gsettings-desktop-schemas >= $GSETTINGS_DESKTOP_SCHEMAS_REQUIRED
                            glib-2.0 >= $GLIB_REQUIRED_VERSION
                            dbusmenu-glib-0.4 >= $DBUSMENUGLIB_REQUIRED_VERSION
                            dbusmenu-gtk3-0.4 >= $DBUSMENUGTK_REQUIRED_VERSION
