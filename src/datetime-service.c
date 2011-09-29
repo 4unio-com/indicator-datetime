@@ -50,6 +50,7 @@ with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "datetime-interface.h"
 #include "dbus-shared.h"
+#include "gnome-wall-clock.h"
 #include "settings-shared.h"
 #include "utils.h"
 
@@ -57,7 +58,6 @@ with this program.  If not, see <http://www.gnu.org/licenses/>.
 static void geo_create_client (GeoclueMaster * master, GeoclueMasterClient * client, gchar * path, GError * error, gpointer user_data);
 static gboolean update_appointment_menu_items (gpointer user_data);
 static gboolean update_timezone_menu_items(gpointer user_data);
-static void setup_timer (void);
 static void geo_client_invalid (GeoclueMasterClient * client, gpointer user_data);
 static void geo_address_change (GeoclueMasterClient * client, gchar * a, gchar * b, gchar * c, gchar * d, gpointer user_data);
 static gboolean get_greeter_mode (void);
@@ -1146,7 +1146,6 @@ timezone_changed (GFileMonitor * monitor, GFile * file, GFile * otherfile, GFile
 	update_current_timezone();
 	datetime_interface_update(DATETIME_INTERFACE(user_data));
 	update_datetime(NULL);
-	setup_timer();
 	return;
 }
 
@@ -1156,6 +1155,8 @@ build_timezone (DatetimeInterface * dbus)
 {
 	GFile * timezonefile = g_file_new_for_path(TIMEZONE_FILE);
 	GFileMonitor * monitor = g_file_monitor_file(timezonefile, G_FILE_MONITOR_NONE, NULL, NULL);
+	g_object_unref (timezonefile);
+
 	if (monitor != NULL) {
 		g_signal_connect(G_OBJECT(monitor), "changed", G_CALLBACK(timezone_changed), dbus);
 		g_debug("Monitoring timezone file: '" TIMEZONE_FILE "'");
@@ -1165,41 +1166,12 @@ build_timezone (DatetimeInterface * dbus)
 	return;
 }
 
-/* Source ID for the timer */
-static guint timer = 0;
-
-/* Execute at a given time, update and setup a new
-   timer to go again.  */
-static gboolean
-timer_func (gpointer user_data)
-{
-	timer = 0;
-	/* Reset up each time to reduce error */
-	setup_timer();
-	update_datetime(NULL);
-	return FALSE;
-}
-
-/* Sets up the time to launch the timer to update the
-   date in the datetime entry */
 static void
-setup_timer (void)
+on_clock_changed (GnomeWallClock *clock,
+                  GParamSpec     *pspec,
+                  gpointer        user_data)
 {
-	if (timer != 0) {
-		g_source_remove(timer);
-		timer = 0;
-	}
-
-	time_t t;
-	t = time(NULL);
-	struct tm * ltime = localtime(&t);
-
-	timer = g_timeout_add_seconds(((23 - ltime->tm_hour) * 60 * 60) +
-	                              ((59 - ltime->tm_min) * 60) +
-	                              ((60 - ltime->tm_sec)) + 60 /* one minute past */,
-	                              timer_func, NULL);
-
-	return;
+	update_datetime (NULL);
 }
 
 static void
@@ -1213,7 +1185,6 @@ session_active_change_cb (GDBusProxy * proxy, gchar * sender_name, gchar * signa
 		if (!idle) {
 			datetime_interface_update(DATETIME_INTERFACE(user_data));
 			update_datetime(NULL);
-			setup_timer();
 		}
 	}
 	return;
@@ -1437,6 +1408,8 @@ service_shutdown (IndicatorService * service, gpointer user_data)
 int
 main (int argc, char ** argv)
 {
+	GnomeWallClock *clock;
+
 	g_type_init();
 
 	/* Acknowledging the service init and setting up the interface */
@@ -1476,7 +1449,8 @@ main (int argc, char ** argv)
 	build_timezone(dbus);
 
 	/* Setup the timer */
-	setup_timer();
+	clock = g_object_new (GNOME_TYPE_WALL_CLOCK, NULL);
+	g_signal_connect (clock, "notify::clock", G_CALLBACK (on_clock_changed), NULL);
 
 	/* And watch for system resumes */
 	g_dbus_proxy_new_for_bus (G_BUS_TYPE_SYSTEM,
