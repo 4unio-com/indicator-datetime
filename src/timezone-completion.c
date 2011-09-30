@@ -44,6 +44,7 @@ struct _TimezoneCompletionPrivate
   guint          keypress_id;
   GCancellable * cancel;
   gchar *        request_text;
+  gchar *        version;
   GHashTable *   request_table;
 };
 
@@ -312,19 +313,16 @@ get_locale (void)
 }
 
 static gchar *
-get_version (void)
+get_version (TimezoneCompletion *self)
 {
-  static gchar *version = NULL;
+  gchar *version = NULL;
 
-  if (version == NULL) {
-    gchar *stdout = NULL;
-    g_spawn_command_line_sync ("lsb_release -rs", &stdout, NULL, NULL, NULL);
+  g_spawn_command_line_sync ("lsb_release -rs", &version, NULL, NULL, NULL);
 
-    if (stdout != NULL)
-      version = g_strstrip (stdout);
-    else
-      version = g_strdup("");
-  }
+  if (version != NULL)
+    version = g_strstrip (version);
+  else
+    version = g_strdup("");
 
   return version;
 }
@@ -351,11 +349,9 @@ request_zones (TimezoneCompletion * completion)
   priv->request_text = g_strdup (text);
 
   gchar * escaped = g_uri_escape_string (text, NULL, FALSE);
-  gchar * version = get_version ();
   gchar * locale = get_locale ();
-  gchar * url = g_strdup_printf (GEONAME_URL, escaped, version, locale);
+  gchar * url = g_strdup_printf (GEONAME_URL, escaped, priv->version, locale);
   g_free (locale);
-  g_free (version);
   g_free (escaped);
 
   GFile * file =  g_file_new_for_uri (url);
@@ -609,6 +605,7 @@ timezone_completion_init (TimezoneCompletion * self)
   priv = self->priv;
 
   priv->initial_model = GTK_TREE_MODEL (get_initial_model ());
+  priv->version = get_version (self);
 
   g_object_set (G_OBJECT (self),
                 "text-column", TIMEZONE_COMPLETION_NAME,
@@ -671,6 +668,11 @@ timezone_completion_dispose (GObject * object)
   if (priv->request_text != NULL) {
     g_free (priv->request_text);
     priv->request_text = NULL;
+  }
+
+  if (priv->version != NULL) {
+    g_free (priv->version);
+    priv->version = NULL;
   }
 
   if (priv->request_table != NULL) {
