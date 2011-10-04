@@ -315,14 +315,15 @@ get_locale (void)
 static gchar *
 get_version (TimezoneCompletion *self)
 {
+  TimezoneCompletionPrivate *priv = self->priv;
   gchar *version = NULL;
 
   g_spawn_command_line_sync ("lsb_release -rs", &version, NULL, NULL, NULL);
 
   if (version != NULL)
-    version = g_strstrip (version);
+    priv->version = g_strstrip (version);
   else
-    version = g_strdup("");
+    priv->version = g_strdup("");
 
   return version;
 }
@@ -350,6 +351,8 @@ request_zones (TimezoneCompletion * completion)
 
   gchar * escaped = g_uri_escape_string (text, NULL, FALSE);
   gchar * locale = get_locale ();
+  if (priv->version == NULL)
+    get_version (completion);
   gchar * url = g_strdup_printf (GEONAME_URL, escaped, priv->version, locale);
   g_free (locale);
   g_free (escaped);
@@ -605,7 +608,7 @@ timezone_completion_init (TimezoneCompletion * self)
   priv = self->priv;
 
   priv->initial_model = GTK_TREE_MODEL (get_initial_model ());
-  priv->version = get_version (self);
+  priv->version = NULL;
 
   g_object_set (G_OBJECT (self),
                 "text-column", TIMEZONE_COMPLETION_NAME,
