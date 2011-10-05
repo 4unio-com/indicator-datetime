@@ -416,6 +416,70 @@ selection_changed (GtkTreeSelection * selection, GtkWidget * remove_button)
   gtk_widget_set_sensitive (remove_button, count > 0);
 }
 
+static GTimeSpan
+get_time_span (gchar *str_zone)
+{
+  GDateTime *now, *now_tz;
+  GTimeZone *tz;
+  GTimeSpan time_span;
+
+  now = g_date_time_new_now_local ();
+
+  tz = g_time_zone_new (str_zone);
+  now_tz = g_date_time_to_timezone (now, tz);
+  time_span = g_date_time_get_utc_offset (now_tz);
+
+  g_date_time_unref (now_tz);
+  g_time_zone_unref (tz);
+
+  g_date_time_unref (now);
+
+  return time_span;
+}
+
+static gint
+sort_func (GtkTreeModel *model,
+           GtkTreeIter  *iter_a,
+           GtkTreeIter  *iter_b,
+           gpointer      user_data)
+{
+  GTimeSpan time_span_a, time_span_b;
+  gchar *str_zone_a, *str_zone_b;
+  gint64 comp = 0;
+  gint ret;
+
+  gtk_tree_model_get (GTK_TREE_MODEL (model), iter_a, COL_ZONE, &str_zone_a, -1);
+  gtk_tree_model_get (GTK_TREE_MODEL (model), iter_b, COL_ZONE, &str_zone_b, -1);
+
+  if ((str_zone_a == NULL || str_zone_a[0] == 0) ||
+      (str_zone_b == NULL || str_zone_b[0] == 0))
+    return 0;
+
+  time_span_a = get_time_span (str_zone_a);
+  time_span_b = get_time_span (str_zone_b);
+
+  if (time_span_a <= 0 || time_span_b <= 0)
+    comp = time_span_a - time_span_b;
+  else if (time_span_a >= 0 || time_span_b >= 0)
+    comp = time_span_a - time_span_b;
+  else if (time_span_a < 0 && time_span_b > 0)
+    comp = -1;
+  else if (time_span_a > 0 && time_span_b < 0)
+    comp = 1;
+
+  if (comp < 0)
+    ret = -1;
+  else if (comp == 0)
+    ret = 0;
+  else if (comp > 0)
+    ret = 1;
+
+  g_free (str_zone_a);
+  g_free (str_zone_b);
+
+  return ret;
+}
+
 GtkWidget *
 datetime_setup_locations_dialog (CcTimezoneMap * map)
 {
@@ -437,6 +501,8 @@ datetime_setup_locations_dialog (CcTimezoneMap * map)
   GtkWidget * dlg = WIG ("locationsDialog");
   GtkWidget * tree = WIG ("locationsView");
   GObject * store = gtk_builder_get_object (builder, "locationsStore");
+  gtk_tree_sortable_set_sort_column_id (GTK_TREE_SORTABLE (store), COL_ZONE, GTK_SORT_ASCENDING);
+  gtk_tree_sortable_set_sort_func (GTK_TREE_SORTABLE (store), COL_ZONE, sort_func, NULL, NULL);
 
   /* Configure tree */
   TimezoneCompletion * completion = timezone_completion_new ();
