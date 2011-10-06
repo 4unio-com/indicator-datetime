@@ -426,41 +426,12 @@ day_selected_double_click_cb (DbusmenuMenuitem * menuitem, gchar *name, GVariant
 	return TRUE;
 }
 
-static guint ecaltimer = 0;
-
-static void
-start_ecal_timer(void)
-{
-	if (ecaltimer != 0) {
-		g_source_remove(ecaltimer);
-		ecaltimer = 0;
-	}
-	if (update_appointment_menu_items(NULL))
-		ecaltimer = g_timeout_add_seconds(60*5, update_appointment_menu_items, NULL); 	
-}
-
-static void
-stop_ecal_timer(void)
-{
-	if (ecaltimer != 0) {
-		g_source_remove(ecaltimer);
-		ecaltimer = 0;
-	}
-}
-static gboolean
-idle_start_ecal_timer (gpointer data)
-{
-	start_ecal_timer();
-	return FALSE;
-}
-
 static void
 show_events_changed (void)
 {
 	if (g_settings_get_boolean(conf, SETTINGS_SHOW_EVENTS_S)) {
 		dbusmenu_menuitem_property_set_bool(add_appointment, DBUSMENU_MENUITEM_PROP_VISIBLE, TRUE);
 		dbusmenu_menuitem_property_set_bool(events_separator, DBUSMENU_MENUITEM_PROP_VISIBLE, TRUE);
-		start_ecal_timer();
 	} else {
 		dbusmenu_menuitem_property_set_bool(add_appointment, DBUSMENU_MENUITEM_PROP_VISIBLE, FALSE);
 		dbusmenu_menuitem_property_set_bool(events_separator, DBUSMENU_MENUITEM_PROP_VISIBLE, FALSE);
@@ -475,7 +446,6 @@ show_events_changed (void)
 				dbusmenu_menuitem_property_set_bool(DBUSMENU_MENUITEM(litem), DBUSMENU_MENUITEM_PROP_VISIBLE, FALSE);
 			}
 		}
-		stop_ecal_timer();
 	}
 }
 
@@ -508,11 +478,9 @@ check_for_calendar (gpointer user_data)
 		if (g_settings_get_boolean(conf, SETTINGS_SHOW_EVENTS_S)) {
 			dbusmenu_menuitem_property_set_bool(add_appointment, DBUSMENU_MENUITEM_PROP_VISIBLE, TRUE);
 			dbusmenu_menuitem_property_set_bool(events_separator, DBUSMENU_MENUITEM_PROP_VISIBLE, TRUE);
-			g_idle_add((GSourceFunc)idle_start_ecal_timer, NULL);
 		} else {
 			dbusmenu_menuitem_property_set_bool(add_appointment, DBUSMENU_MENUITEM_PROP_VISIBLE, FALSE);
 			dbusmenu_menuitem_property_set_bool(events_separator, DBUSMENU_MENUITEM_PROP_VISIBLE, FALSE);
-			stop_ecal_timer();
 		}
 		
 		// Connect to calendar events
