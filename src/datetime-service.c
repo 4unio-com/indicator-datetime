@@ -547,6 +547,7 @@ update_timezone_menu_items(gpointer user_data) {
 	}
 
 	gchar ** locations = g_settings_get_strv(conf, SETTINGS_LOCATIONS_S);
+	gchar *current_timezone_name = g_settings_get_string (conf, SETTINGS_TIMEZONE_NAME_S);
 
 	if (locations == NULL) { 
 		g_debug("No locations configured (NULL)");
@@ -581,7 +582,7 @@ update_timezone_menu_items(gpointer user_data) {
 	offset = dbusmenu_menuitem_get_position (current_location, root)+1;
 	for (i = 0; i < len; i++) {
 		// Iterate over configured places and add any which aren't already listed
-		if ((current_timezone == NULL || !g_str_has_prefix(locations[i], current_timezone)) &&
+		if (g_strcmp0 (locations[i], current_timezone_name) != 0 &&
 		    (geo_timezone == NULL || !g_str_has_prefix(locations[i], geo_timezone))) {
 			g_debug("Adding timezone in update_timezones %s", locations[i]);
 			item = dbusmenu_menuitem_new();
