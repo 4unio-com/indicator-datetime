@@ -277,7 +277,8 @@ menu_visible_notfy_cb(GtkWidget * menu, G_GNUC_UNUSED GParamSpec *pspec, gpointe
 	g_date_time_unref (datetime);
 
   	// Set the calendar to todays date
-	ido_calendar_menu_item_set_date (self->priv->ido_calendar, y, m-1, d);
+	if (self->priv->ido_calendar)
+		ido_calendar_menu_item_set_date (self->priv->ido_calendar, y, m-1, d);
 
 	// Make sure the day-selected signal is sent so the menu updates - may duplicate
 	/*GVariant *variant = g_variant_new_uint32((guint)curtime);
@@ -367,12 +368,12 @@ indicator_datetime_init (IndicatorDatetime *self)
 
 	self->priv->menu = dbusmenu_gtkmenu_new(SERVICE_NAME, MENU_OBJ);
 
-	g_signal_connect(self->priv->menu, "notify::visible", G_CALLBACK(menu_visible_notfy_cb), self);
-	
 	DbusmenuGtkClient *client = dbusmenu_gtkmenu_get_client(self->priv->menu);
 	dbusmenu_client_add_type_handler_full(DBUSMENU_CLIENT(client), DBUSMENU_CALENDAR_MENUITEM_TYPE, new_calendar_item, self, NULL);
 	dbusmenu_client_add_type_handler_full(DBUSMENU_CLIENT(client), APPOINTMENT_MENUITEM_TYPE, new_appointment_item, self, NULL);
 	dbusmenu_client_add_type_handler_full(DBUSMENU_CLIENT(client), TIMEZONE_MENUITEM_TYPE, new_timezone_item, self, NULL);
+
+	g_signal_connect(self->priv->menu, "notify::visible", G_CALLBACK(menu_visible_notfy_cb), self);
 
 	self->priv->service_proxy_cancel = g_cancellable_new();
 
