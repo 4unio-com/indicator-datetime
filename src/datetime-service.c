@@ -40,11 +40,11 @@ with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <geoclue/geoclue-master-client.h>
 
 #include <time.h>
-#include <libecal/e-cal.h>
+#include <libecal/e-cal-client.h>
 #include <libical/ical.h>
 #include <libecal/e-cal-time-util.h>
 #include <libedataserver/e-source.h>
-#include <libedataserverui/e-passwords.h>
+#include <libedataserverui/e-client-utils.h>
 // Other users of ecal seem to also include these, not sure why they should be included by the above
 #include <libical/icaltime.h>
 #include <cairo/cairo.h>
@@ -591,27 +591,6 @@ check_for_calendar (gpointer user_data)
 	return FALSE;
 }
 
-// Authentication function
-static gchar *
-auth_func (ECal *ecal, 
-           const gchar *prompt, 
-           const gchar *key, 
-           gpointer user_data)
-{
-	ESource *source = e_cal_get_source (ecal);
-	gchar *auth_domain = e_source_get_duped_property (source, "auth-domain");
-
-	const gchar *component_name;
-	if (auth_domain) component_name = auth_domain;
-	else component_name = "Calendar";
-	
-	gchar *password = e_passwords_get_password (component_name, key);
-	
-	g_free (auth_domain);
-
-	return password;
-}
-
 static gint
 compare_comp_instances (gconstpointer a, 
                         gconstpointer b)
@@ -717,7 +696,7 @@ update_appointment_menu_items (gpointer user_data)
 	highlightdays = highlightdays + 7; // Minimum of 7 days ahead 
 	t2 = t1 + (time_t) (highlightdays * 24 * 60 * 60);
 	
-	if (!e_cal_get_sources(&sources, E_CAL_SOURCE_TYPE_EVENT, &gerror)) {
+	if (!e_client_get_sources (&sources, E_CAL_CLIENT_SOURCE_TYPE_EVENTS, &gerror)) {
 		g_debug("Failed to get ecal sources\n");
 		return FALSE;
 	}
@@ -747,25 +726,39 @@ update_appointment_menu_items (gpointer user_data)
 		GSList *s;
 		
 		for (s = e_source_group_peek_sources (group); s; s = s->next) {
-			ESource *source = E_SOURCE (s->data);
+			ESource *source;
+			ECalClient *ecal;
+			GError *error = NULL;
+
+			source = E_SOURCE (s->data);
 			g_signal_connect (G_OBJECT(source), "changed", G_CALLBACK (update_appointment_menu_items), NULL);
-			ECal *ecal = e_cal_new(source, E_CAL_SOURCE_TYPE_EVENT);
-			e_cal_set_auth_func (ecal, (ECalAuthFunc) auth_func, NULL);
-			
+
+			ecal = e_cal_client_new (source, E_CAL_CLIENT_SOURCE_TYPE_EVENTS, &gerror);
+			if (!ecal){
+				g_debug ("Could not load source '%s' from '%s': %s",
+				         e_source_peek_name (source),
+				         e_source_peek_relative_uri (source),
+				         gerror->message);
+				g_clear_error(&error);
+				continue;
+			}
+			g_signal_connect (retval, "authenticate",
+			                  G_CALLBACK (e_client_utils_authenticate_handler), NULL);
+
 			icaltimezone* current_zone = icaltimezone_get_builtin_timezone(current_timezone);
 			if (!current_zone) {
 				// current_timezone may be a TZID?
 				current_zone = icaltimezone_get_builtin_timezone_from_tzid(current_timezone);
 			}
-			if (current_zone && !e_cal_set_default_timezone(ecal, current_zone, &gerror)) {
+			if (current_zone && !e_cal_client_set_default_timezone (ecal, current_zone)) {
 				g_debug("Failed to set ecal default timezone %s", gerror->message);
 				g_error_free(gerror);
 				gerror = NULL;
 				g_object_unref(ecal);
 				continue;
 			}
-			
-			if (!e_cal_open(ecal, FALSE, &gerror)) {
+
+			if (!e_client_open_sync (E_CLIENT (ecal), FALSE, NULL, &gerror)) {
 				g_debug("Failed to get ecal sources %s", gerror->message);
 				g_error_free(gerror);
 				gerror = NULL;
@@ -788,7 +781,12 @@ update_appointment_menu_items (gpointer user_data)
 			}
 			g_debug("ecal_uid is enabled, generating instances");
 			
-			e_cal_generate_instances (ecal, t1, t2, (ECalRecurInstanceFn) populate_appointment_instances, (gpointer) source);
+			e_cal_client_generate_instances (ecal,
+			                                 t1, t2,
+			                                 NULL,
+			                                 (ECalRecurInstanceFn) populate_appointment_instances,
+			                                 (gpointer) source,
+			                                 NULL);
 			g_object_unref(ecal);
 		}
 	}
