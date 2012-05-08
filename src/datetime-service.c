@@ -39,6 +39,8 @@ with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <geoclue/geoclue-master.h>
 #include <geoclue/geoclue-master-client.h>
 
+#include <timezonemap/cc-timezone-map.h>
+
 #include <time.h>
 #include <libecal/e-cal.h>
 #include <libical/ical.h>
@@ -94,7 +96,7 @@ static GConfClient      * gconf = NULL;
 
 /* Geoclue trackers */
 static GeoclueMasterClient * geo_master = NULL;
-static GeoclueAddress * geo_address = NULL;
+static GeocluePosition * geo_position = NULL;
 
 /* Our 2 important timezones */
 static gchar 			* current_timezone = NULL;
@@ -1214,9 +1216,9 @@ system_proxy_cb (GObject * object, GAsyncResult * res, gpointer user_data)
 	g_signal_connect(proxy, "g-signal", G_CALLBACK(session_active_change_cb), user_data);
 }
 
-/* Callback from getting the address */
+/* Callback from getting the position */
 static void
-geo_address_cb (GeoclueAddress * address, int timestamp, GHashTable * addy_data, GeoclueAccuracy * accuracy, GError * error, gpointer user_data)
+geo_position_cb (GeocluePosition * position, GeocluePositionFields fields, int timestamp, double latitude, double longitude, double altitude, GeoclueAccuracy * accuracy, GError * error, gpointer userdata)
 {
 	if (error != NULL) {
 		g_warning("Unable to get Geoclue address: %s", error->message);
@@ -1224,19 +1226,23 @@ geo_address_cb (GeoclueAddress * address, int timestamp, GHashTable * addy_data,
 		return;
 	}
 
-	g_debug("Geoclue timezone is: %s", (gchar *)g_hash_table_lookup(addy_data, "timezone"));
+	CcTimezoneMap * map = cc_timezone_map_new();
+	const gchar * in_tz = cc_timezone_map_get_timezone_at_coords(map, latitude, longitude);
+
+	g_debug("Geoclue timezone is: %s", in_tz);
 
 	if (geo_timezone != NULL) {
 		g_free(geo_timezone);
 		geo_timezone = NULL;
 	}
 
-	gpointer tz_hash = g_hash_table_lookup(addy_data, "timezone");
-	if (tz_hash != NULL) {
-		geo_timezone = g_strdup((gchar *)tz_hash);
-	}
+	geo_timezone = g_strdup(in_tz);
 
 	update_location_menu_items();
+
+	/* Down here so that in_tz remains valid */
+	g_object_ref_sink(map);
+	g_object_unref(map);
 
 	return;
 }
@@ -1244,16 +1250,16 @@ geo_address_cb (GeoclueAddress * address, int timestamp, GHashTable * addy_data,
 /* Clean up the reference we kept to the address and make sure to
    drop the signals incase someone else has one. */
 static void
-geo_address_clean (void)
+geo_position_clean (void)
 {
-	if (geo_address == NULL) {
+	if (geo_position == NULL) {
 		return;
 	}
 
-	g_signal_handlers_disconnect_by_func(G_OBJECT(geo_address), geo_address_cb, NULL);
-	g_object_unref(G_OBJECT(geo_address));
+	g_signal_handlers_disconnect_by_func(G_OBJECT(geo_position), geo_position_cb, NULL);
+	g_object_unref(G_OBJECT(geo_position));
 
-	geo_address = NULL;
+	geo_position = NULL;
 
 	return;
 }
@@ -1278,7 +1284,7 @@ geo_client_clean (void)
 
 /* Callback from creating the address */
 static void
-geo_create_address (GeoclueMasterClient * master, GeoclueAddress * address, GError * error, gpointer user_data)
+geo_create_position (GeoclueMasterClient * master, GeocluePosition * position, GError * error, gpointer user_data)
 {
 	if (error != NULL) {
 		g_warning("Unable to create GeoClue address: %s", error->message);
@@ -1289,16 +1295,16 @@ geo_create_address (GeoclueMasterClient * master, GeoclueAddress * address, GErr
 	/* We shouldn't have created a new address if we already had one
 	   so this is a warning.  But, it really is only a mem-leak so we
 	   don't need to error out. */
-	g_warn_if_fail(geo_address == NULL);
-	geo_address_clean();
+	g_warn_if_fail(geo_position == NULL);
+	geo_position_clean();
 
-	g_debug("Created Geoclue Address");
-	geo_address = address;
-	g_object_ref(G_OBJECT(geo_address));
+	g_debug("Created Geoclue Position");
+	geo_position = position;
+	g_object_ref(G_OBJECT(geo_position));
 
-	geoclue_address_get_address_async(geo_address, geo_address_cb, NULL);
+	geoclue_position_get_position_async(geo_position, geo_position_cb, NULL);
 
-	g_signal_connect(G_OBJECT(address), "address-changed", G_CALLBACK(geo_address_cb), NULL);
+	g_signal_connect(G_OBJECT(position), "position-changed", G_CALLBACK(geo_position_cb), NULL);
 
 	return;
 }
@@ -1322,7 +1328,7 @@ geo_client_invalid (GeoclueMasterClient * client, gpointer user_data)
 
 	/* Client changes we can assume the address is now invalid so we
 	   need to unreference the one we had. */
-	geo_address_clean();
+	geo_position_clean();
 
 	/* And our master client is invalid */
 	geo_client_clean();
@@ -1348,9 +1354,9 @@ geo_address_change (GeoclueMasterClient * client, gchar * a, gchar * b, gchar * 
 
 	/* If the address is supposed to have changed we need to drop the old
 	   address before starting to get the new one. */
-	geo_address_clean();
+	geo_position_clean();
 
-	geoclue_master_client_create_address_async(geo_master, geo_create_address, NULL);
+	geoclue_master_client_create_position_async(geo_master, geo_create_position, NULL);
 
 	if (geo_timezone != NULL) {
 		g_free(geo_timezone);
@@ -1384,7 +1390,7 @@ geo_create_client (GeoclueMaster * master, GeoclueMasterClient * client, gchar *
 	g_object_ref(G_OBJECT(geo_master));
 
 	/* New client, make sure we don't have an address hanging on */
-	geo_address_clean();
+	geo_position_clean();
 
 	geoclue_master_client_set_requirements_async(geo_master,
 	                                             GEOCLUE_ACCURACY_LEVEL_REGION,
@@ -1394,7 +1400,7 @@ geo_create_client (GeoclueMaster * master, GeoclueMasterClient * client, gchar *
 	                                             geo_req_set,
 	                                             NULL);
 
-	geoclue_master_client_create_address_async(geo_master, geo_create_address, NULL);
+	geoclue_master_client_create_position_async(geo_master, geo_create_position, NULL);
 
 	g_signal_connect(G_OBJECT(client), "invalidated", G_CALLBACK(geo_client_invalid), NULL);
 	g_signal_connect(G_OBJECT(client), "address-provider-changed", G_CALLBACK(geo_address_change), NULL);
@@ -1486,7 +1492,7 @@ main (int argc, char ** argv)
 
 	icaltimezone_free_builtin_timezones();
 
-	geo_address_clean();
+	geo_position_clean();
 	geo_client_clean();
 
 	return 0;
