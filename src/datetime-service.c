@@ -60,6 +60,8 @@ with this program.  If not, see <http://www.gnu.org/licenses/>.
  #define SETTINGS_APP_INVOCATION "gnome-control-center datetime"
 #endif
 
+#define EVOLUTION_SELECTED_CALENDARS "/apps/evolution/calendar/display/selected_calendars"
+
 static void geo_create_client (GeoclueMaster * master, GeoclueMasterClient * client, gchar * path, GError * error, gpointer user_data);
 static gboolean update_appointment_menu_items (gpointer user_data);
 static void update_location_menu_items (void);
@@ -500,11 +502,37 @@ idle_start_ecal_timer (gpointer data)
 	return FALSE;
 }
 
+static gboolean
+calendar_is_active (void)
+{
+	/* confirm that it's got an account set up... */
+	GSList *calendar_list = gconf_client_get_list (gconf, EVOLUTION_SELECTED_CALENDARS, GCONF_VALUE_STRING, NULL);
+	const guint n = g_slist_length (calendar_list);
+	g_debug ("found %u evolution calendars", n);
+	g_slist_free_full (calendar_list, g_free);
+	return n > 0;
+}
+
+static gboolean
+calendar_app_is_usable (void)
+{
+	/* confirm that it's installed... */
+	gchar *evo = g_find_program_in_path("evolution");
+	if (evo == NULL)
+		return FALSE;
+	g_debug ("found calendar app: '%s'", evo);
+	g_free (evo);
+	return TRUE;
+}
+
 static void
 show_events_changed (void)
 {
-	if (g_settings_get_boolean(conf, SETTINGS_SHOW_EVENTS_S)) {
-		dbusmenu_menuitem_property_set_bool(add_appointment, DBUSMENU_MENUITEM_PROP_VISIBLE, TRUE);
+	gboolean has_calendar_app = (!get_greeter_mode () && calendar_app_is_usable());
+	gboolean has_active_calendar = calendar_is_active();
+
+	if (has_active_calendar && g_settings_get_boolean(conf, SETTINGS_SHOW_EVENTS_S)) {
+		dbusmenu_menuitem_property_set_bool(add_appointment, DBUSMENU_MENUITEM_PROP_VISIBLE, has_calendar_app);
 		dbusmenu_menuitem_property_set_bool(events_separator, DBUSMENU_MENUITEM_PROP_VISIBLE, TRUE);
 		start_ecal_timer();
 	} else {
@@ -525,24 +553,6 @@ show_events_changed (void)
 	}
 }
 
-static gboolean
-calendar_app_is_usable (void)
-{
-	/* confirm that it's installed... */
-	gchar *evo = g_find_program_in_path("evolution");
-	if (evo == NULL)
-		return FALSE;
-	g_debug ("found calendar app: '%s'", evo);
-	g_free (evo);
-
-	/* confirm that it's got an account set up... */
-	GSList *accounts_list = gconf_client_get_list (gconf, "/apps/evolution/mail/accounts", GCONF_VALUE_STRING, NULL);
-	const guint n = g_slist_length (accounts_list);
-	g_debug ("found %u evolution accounts", n);
-	g_slist_free_full (accounts_list, g_free);
-	return n > 0;
-}
-
 /* Looks for the calendar application and enables the item if
    we have one, starts ecal timer if events are turned on */
 static gboolean
@@ -551,44 +561,38 @@ check_for_calendar (gpointer user_data)
 	g_return_val_if_fail (calendar != NULL, FALSE);
 	
 	dbusmenu_menuitem_property_set_bool(date, DBUSMENU_MENUITEM_PROP_ENABLED, TRUE);
-	
-	if (!get_greeter_mode () && calendar_app_is_usable()) {
-		
-		g_signal_connect (G_OBJECT(date), DBUSMENU_MENUITEM_SIGNAL_ITEM_ACTIVATED,
-		                  G_CALLBACK (activate_cb), "evolution -c calendar");
-		
-		events_separator = dbusmenu_menuitem_new();
-		dbusmenu_menuitem_property_set(events_separator, DBUSMENU_MENUITEM_PROP_TYPE, DBUSMENU_CLIENT_TYPES_SEPARATOR);
-		dbusmenu_menuitem_child_add_position(root, events_separator, 2);
+
+	gboolean has_calendar_app = (!get_greeter_mode () && calendar_app_is_usable());
+	gboolean has_active_calendar = calendar_is_active();
+
+	events_separator = dbusmenu_menuitem_new();
+	dbusmenu_menuitem_property_set(events_separator, DBUSMENU_MENUITEM_PROP_TYPE, DBUSMENU_CLIENT_TYPES_SEPARATOR);
+	dbusmenu_menuitem_child_add_position(root, events_separator, 2);
+
+	if (has_calendar_app) {
 		add_appointment = dbusmenu_menuitem_new();
 		dbusmenu_menuitem_property_set (add_appointment, DBUSMENU_MENUITEM_PROP_LABEL, _("Add Event…"));
-		dbusmenu_menuitem_property_set_bool(add_appointment, DBUSMENU_MENUITEM_PROP_ENABLED, TRUE);
+		dbusmenu_menuitem_property_set_bool(add_appointment, DBUSMENU_MENUITEM_PROP_ENABLED, has_calendar_app);
 		g_signal_connect(G_OBJECT(add_appointment), DBUSMENU_MENUITEM_SIGNAL_ITEM_ACTIVATED, G_CALLBACK(activate_cb), "evolution -c calendar");
 		dbusmenu_menuitem_child_add_position (root, add_appointment, 3);
-
-
-		if (g_settings_get_boolean(conf, SETTINGS_SHOW_EVENTS_S)) {
-			dbusmenu_menuitem_property_set_bool(add_appointment, DBUSMENU_MENUITEM_PROP_VISIBLE, TRUE);
-			dbusmenu_menuitem_property_set_bool(events_separator, DBUSMENU_MENUITEM_PROP_VISIBLE, TRUE);
-			g_idle_add((GSourceFunc)idle_start_ecal_timer, NULL);
-		} else {
-			dbusmenu_menuitem_property_set_bool(add_appointment, DBUSMENU_MENUITEM_PROP_VISIBLE, FALSE);
-			dbusmenu_menuitem_property_set_bool(events_separator, DBUSMENU_MENUITEM_PROP_VISIBLE, FALSE);
-			stop_ecal_timer();
-		}
-		
-		// Connect to calendar events
-		g_signal_connect(calendar, "event::month-changed", G_CALLBACK(month_changed_cb), NULL);
-		g_signal_connect(calendar, "event::day-selected", G_CALLBACK(day_selected_cb), NULL);
-		g_signal_connect(calendar, "event::day-selected-double-click", G_CALLBACK(day_selected_double_click_cb), NULL);
-	} else {
-		g_debug("Unable to find calendar app.");
-		if (add_appointment != NULL)
-			dbusmenu_menuitem_property_set_bool(add_appointment, DBUSMENU_MENUITEM_PROP_VISIBLE, FALSE);
-		if (events_separator != NULL)
-			dbusmenu_menuitem_property_set_bool(events_separator, DBUSMENU_MENUITEM_PROP_VISIBLE, FALSE);
+		g_signal_connect (G_OBJECT(date), DBUSMENU_MENUITEM_SIGNAL_ITEM_ACTIVATED,
+		                  G_CALLBACK (activate_cb), "evolution -c calendar");
 	}
-	
+
+	if (has_active_calendar && g_settings_get_boolean(conf, SETTINGS_SHOW_EVENTS_S)) {
+		if (has_calendar_app) {
+			dbusmenu_menuitem_property_set_bool(add_appointment, DBUSMENU_MENUITEM_PROP_VISIBLE, TRUE);
+		}
+		dbusmenu_menuitem_property_set_bool(events_separator, DBUSMENU_MENUITEM_PROP_VISIBLE, TRUE);
+		g_idle_add((GSourceFunc)idle_start_ecal_timer, NULL);
+	} else {
+		if (has_calendar_app) {
+			dbusmenu_menuitem_property_set_bool(add_appointment, DBUSMENU_MENUITEM_PROP_VISIBLE, FALSE);
+		}
+		dbusmenu_menuitem_property_set_bool(events_separator, DBUSMENU_MENUITEM_PROP_VISIBLE, FALSE);
+		stop_ecal_timer();
+	}
+
 	if (g_settings_get_boolean(conf, SETTINGS_SHOW_CALENDAR_S)) {
 		dbusmenu_menuitem_property_set_bool(calendar, DBUSMENU_MENUITEM_PROP_ENABLED, TRUE);
 		dbusmenu_menuitem_property_set_bool(calendar, DBUSMENU_MENUITEM_PROP_VISIBLE, TRUE);
@@ -596,6 +600,14 @@ check_for_calendar (gpointer user_data)
 		dbusmenu_menuitem_property_set_bool(calendar, DBUSMENU_MENUITEM_PROP_ENABLED, FALSE);
 		dbusmenu_menuitem_property_set_bool(calendar, DBUSMENU_MENUITEM_PROP_VISIBLE, FALSE);
 	}
+
+	// Connect to calendar events
+	g_signal_connect(calendar, "event::month-changed", G_CALLBACK(month_changed_cb), NULL);
+	g_signal_connect(calendar, "event::day-selected", G_CALLBACK(day_selected_cb), NULL);
+	g_signal_connect(calendar, "event::day-selected-double-click", G_CALLBACK(day_selected_double_click_cb), NULL);
+
+	// Keep track of active calendars
+	g_signal_connect (conf, "changed::" EVOLUTION_SELECTED_CALENDARS, G_CALLBACK (show_events_changed), NULL);
 
 	return FALSE;
 }
