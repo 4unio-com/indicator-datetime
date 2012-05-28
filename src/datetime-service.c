@@ -40,11 +40,12 @@ with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <geoclue/geoclue-master-client.h>
 
 #include <time.h>
-#include <libecal/e-cal.h>
+#include <libecal/e-cal-client.h>
 #include <libical/ical.h>
 #include <libecal/e-cal-time-util.h>
 #include <libedataserver/e-source.h>
 #include <libedataserverui/e-passwords.h>
+#include <libedataserverui/e-client-utils.h>
 // Other users of ecal seem to also include these, not sure why they should be included by the above
 #include <libical/icaltime.h>
 #include <cairo/cairo.h>
@@ -192,7 +193,7 @@ update_location_menu_items (void)
 
 	/* maybe add geo_timezone */
 	if (geo_timezone != NULL) {
-		const gboolean visible = g_settings_get_boolean (conf, SETTINGS_SHOW_DETECTED_S);
+		const gboolean visible = TRUE; // g_settings_get_boolean (conf, SETTINGS_SHOW_DETECTED_S);
 		gchar * name = get_current_zone_name (geo_timezone);
 		locations = locations_add (locations, geo_timezone, name, visible, now);
 		g_free (name);
@@ -200,7 +201,7 @@ update_location_menu_items (void)
 
 	/* maybe add current_timezone */
 	if (current_timezone != NULL) {
-		const gboolean visible = g_settings_get_boolean (conf, SETTINGS_SHOW_DETECTED_S);
+		const gboolean visible = TRUE; //g_settings_get_boolean (conf, SETTINGS_SHOW_DETECTED_S);
 		gchar * name = get_current_zone_name (current_timezone);
 		locations = locations_add (locations, current_timezone, name, visible, now);
 		g_free (name);
@@ -612,26 +613,6 @@ check_for_calendar (gpointer user_data)
 	return FALSE;
 }
 
-// Authentication function
-static gchar *
-auth_func (ECal *ecal, 
-           const gchar *prompt, 
-           const gchar *key, 
-           gpointer user_data)
-{
-	ESource *source = e_cal_get_source (ecal);
-	gchar *auth_domain = e_source_get_duped_property (source, "auth-domain");
-
-	const gchar *component_name;
-	if (auth_domain) component_name = auth_domain;
-	else component_name = "Calendar";
-	
-	gchar *password = e_passwords_get_password (component_name, key);
-	
-	g_free (auth_domain);
-
-	return password;
-}
 
 static gint
 compare_comp_instances (gconstpointer ga, gconstpointer gb)
@@ -748,8 +729,8 @@ update_appointment_menu_items (gpointer user_data)
 	highlightdays = highlightdays + 7; // Minimum of 7 days ahead 
 	t2 = t1 + (time_t) (highlightdays * 24 * 60 * 60);
 	
-	if (!e_cal_get_sources(&sources, E_CAL_SOURCE_TYPE_EVENT, &gerror)) {
-		g_debug("Failed to get ecal sources\n");
+	if (!e_cal_client_get_sources(&sources, E_CAL_CLIENT_SOURCE_TYPE_EVENTS, &gerror)) {
+		g_debug("Failed to get ecal sources: %s\n", gerror->message);
 		g_clear_error (&gerror);
 		return FALSE;
 	}
@@ -773,27 +754,34 @@ update_appointment_menu_items (gpointer user_data)
 		for (s = e_source_group_peek_sources (group); s; s = s->next) {
 			ESource *source = E_SOURCE (s->data);
 			g_signal_connect (G_OBJECT(source), "changed", G_CALLBACK (update_appointment_menu_items), NULL);
-			ECal *ecal = e_cal_new(source, E_CAL_SOURCE_TYPE_EVENT);
-			e_cal_set_auth_func (ecal, (ECalAuthFunc) auth_func, NULL);
-			
+
+			ECalClient *ecal = e_cal_client_new(source, E_CAL_SOURCE_TYPE_EVENT, &gerror);
+			if (gerror) {
+				g_debug("Failed to create calendar: %s", gerror->message);
+				g_clear_error (&gerror);
+				g_object_unref(ecal);
+				continue;
+			}
+			g_signal_connect (G_OBJECT(ecal), "authenticate", G_CALLBACK (e_client_utils_authenticate_handler), NULL);
+
+			if (!e_client_open_sync(E_CLIENT(ecal), FALSE, NULL, &gerror)) {
+				g_debug("Failed to open calendar: %s", gerror->message);
+				g_clear_error (&gerror);
+				g_object_unref(ecal);
+				continue;
+			}
+
 			icaltimezone* current_zone = icaltimezone_get_builtin_timezone(current_timezone);
 			if (!current_zone) {
 				// current_timezone may be a TZID?
 				current_zone = icaltimezone_get_builtin_timezone_from_tzid(current_timezone);
 			}
-			if (current_zone && !e_cal_set_default_timezone(ecal, current_zone, &gerror)) {
+			if (!current_zone) {
 				g_debug("Failed to set ecal default timezone %s", gerror->message);
-				g_clear_error (&gerror);
-				g_object_unref(ecal);
 				continue;
 			}
-			
-			if (!e_cal_open(ecal, FALSE, &gerror)) {
-				g_debug("Failed to get ecal sources %s", gerror->message);
-				g_clear_error (&gerror);
-				g_object_unref(ecal);
-				continue;
-			}
+
+			e_cal_client_set_default_timezone(ecal, current_zone);
 
 			const gchar *ecal_uid = e_source_peek_uid(source);
 			g_debug("Checking ecal_uid is enabled: %s", ecal_uid);
@@ -804,7 +792,7 @@ update_appointment_menu_items (gpointer user_data)
 			}
 
 			g_debug("ecal_uid is enabled, generating instances");
-			e_cal_generate_instances (ecal, t1, t2, (ECalRecurInstanceFn) populate_appointment_instances, source);
+			e_cal_client_generate_instances (ecal, t1, t2, NULL, (ECalRecurInstanceFn) populate_appointment_instances, source, NULL);
 			g_object_unref(ecal);
 		}
 	}
@@ -1434,7 +1422,7 @@ service_shutdown (IndicatorService * service, gpointer user_data)
 int
 main (int argc, char ** argv)
 {
-	g_type_init();
+	gtk_init(&argc, &argv);
 
 	/* Acknowledging the service init and setting up the interface */
 	service = indicator_service_new_version(SERVICE_NAME, SERVICE_VERSION);
