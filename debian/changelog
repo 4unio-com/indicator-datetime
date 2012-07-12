@@ -1,3 +1,12 @@
+indicator-datetime (0.3.94-0ubuntu4) UNRELEASED; urgency=low
+
+  * debian/control
+    - dropped indicator-datetime-gtk2 package
+  * debian/rules
+    - Dropped the dual build
+
+ -- Ken VanDine <ken.vandine@canonical.com>  Thu, 12 Jul 2012 15:36:56 -0400
+
 indicator-datetime (0.3.94-0ubuntu3) quantal; urgency=low
 
   * Rebuild against evolution-data-server 3.4

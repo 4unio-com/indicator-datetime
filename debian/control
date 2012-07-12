@@ -28,7 +28,7 @@ Build-Depends: cdbs,
                libgnome-control-center-dev,
                dh-autoreconf,
                libtimezonemap1-dev
-Standards-Version: 3.9.2
+Standards-Version: 3.9.3
 Homepage: https://launchpad.net/indicator-datetime
 Vcs-Bzr: http://bazaar.launchpad.net/~ubuntu-desktop/indicator-datetime/ubuntu
 
@@ -39,17 +39,5 @@ Depends: ${shlibs:Depends},
          gnome-control-center,
          geoclue-ubuntu-geoip | geoclue-provider
 Recommends: indicator-applet | indicator-renderer, evolution-data-server
-Description: Simple clock
- A simple clock appearing in the indicator bar
-
-Package: indicator-datetime-gtk2
-Architecture: any
-Depends: ${shlibs:Depends}, 
-         ${misc:Depends},
-         indicator-datetime (= ${binary:Version}),
-         gnome-control-center,
-         geoclue-ubuntu-geoip | geoclue-provider
-Replaces: indicator-datetime (<< 0.2.90)
-Recommends: indicator-applet | indicator-renderer
 Description: Simple clock
  A simple clock appearing in the indicator bar
