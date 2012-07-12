@@ -1,19 +1,13 @@
 #!/usr/bin/make -f
+# -*- makefile -*-
+#
+# Uncomment this to turn on verbose mode.
+#export DH_VERBOSE=1
 
-export NOCONFIGURE = 1
+override_dh_autoreconf:
+	NOCONFIGURE=1 dh_autoreconf ./autogen.sh
 
-include /usr/share/cdbs/1/rules/patchsys-quilt.mk
-include /usr/share/cdbs/1/rules/autoreconf.mk
-include /usr/share/cdbs/1/rules/debhelper.mk
-include /usr/share/cdbs/1/class/gnome.mk
-
-DEB_CONFIGURE_EXTRA_FLAGS = --disable-static
-
-DEB_DH_AUTORECONF_ARGS = ./autogen.sh
-
-LDFLAGS += -Wl,-z,defs -Wl,--as-needed
-
-common-install-arch::
+override_dh_install:
 	find debian/indicator-datetime/ -name \*.la -delete
 	find debian/indicator-datetime/ -name \*.a -delete
 	cd po; intltool-update --pot --verbose
@@ -22,4 +16,7 @@ common-install-arch::
 		sed -ri '/^(Name|GenericName|Comment|X-GNOME-FullName)\[/d' $$d; \
 		echo "X-Ubuntu-Gettext-Domain=indicator-datetime" >> $$d; \
        	done;
+	dh_install
 
+%:
+	dh $@ --with autoreconf

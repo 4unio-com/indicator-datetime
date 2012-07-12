@@ -2,8 +2,10 @@ indicator-datetime (0.3.94-0ubuntu4) UNRELEASED; urgency=low
 
   * debian/control
     - dropped indicator-datetime-gtk2 package
+    - Dropped build depends for libgtk2.0-dev and cdbs
   * debian/rules
     - Dropped the dual build
+    - cdbs -> dh
 
  -- Ken VanDine <ken.vandine@canonical.com>  Thu, 12 Jul 2012 15:36:56 -0400
 
