@@ -247,18 +247,29 @@ sync_entry (IndicatorDatetimePanel * self, const gchar * location)
 }
 
 static void
+sync_location (IndicatorDatetimePanel * self, const gchar * en_name)
+{
+  gtk_entry_set_text (GTK_ENTRY (self->priv->tz_entry), en_name);
+  gtk_entry_set_icon_from_stock (GTK_ENTRY (self->priv->tz_entry),
+                                 GTK_ENTRY_ICON_SECONDARY, NULL);
+
+  g_settings_set_string (conf, SETTINGS_TIMEZONE_NAME_S, en_name);
+}  
+
+static void
 tz_changed (CcTimezoneMap * map, CcTimezoneLocation * location, IndicatorDatetimePanel * self)
 {
   if (location == NULL)
     return;
 
-  gchar * zone;
+  gchar * zone, * name;
   g_object_get (location, "zone", &zone, NULL);
+  g_object_get (location, "en_name", &name, NULL);
 
   g_dbus_proxy_call (self->priv->proxy, "SetTimezone", g_variant_new ("(s)", zone),
                      G_DBUS_CALL_FLAGS_NONE, -1, NULL, dbus_set_answered, "timezone");
 
-  sync_entry (self, zone);
+  sync_location (self, name);
 
   g_free (zone);
 }
