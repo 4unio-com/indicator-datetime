@@ -958,6 +958,9 @@ update_appointment_menu_items (gpointer unused)
 		g_debug("Adding appointment: %p", item);
 	}
 	
+	for (; i<MAX_APPOINTMENT_MENUITEMS; i++)
+		dbusmenu_menuitem_property_set_bool(appointments[i], DBUSMENU_MENUITEM_PROP_VISIBLE, FALSE);
+
 	g_clear_error (&gerror);
 
 	g_list_free_full (sorted_comp_instances, (GDestroyNotify)comp_instance_free);
