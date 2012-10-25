@@ -863,14 +863,11 @@ update_appointment_menu_items (gpointer unused)
 
 		// Due text
 		if (full_day) {
-			struct tm fulldaytime = {0};
-			gmtime_r(&ci->start, &fulldaytime);
-
 			/* TRANSLATORS: This is a strftime string for the day for full day events
 			   in the menu.  It should most likely be either '%A' for a full text day
 			   (Wednesday) or '%a' for a shortened one (Wed).  You should only need to
 			   change for '%a' in the case of langauges with very long day names. */
-			strftime(right, 20, _("%A"), &fulldaytime);
+			strftime(right, 20, _("%A"), localtime(&ci->start));
 		} else {
 			if (apt_output == SETTINGS_TIME_12_HOUR) {
 				if ((mday == dmday) && (mon == dmon) && (year == dyear))
