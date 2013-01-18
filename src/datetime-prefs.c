@@ -253,6 +253,7 @@ sync_location (IndicatorDatetimePanel * self, const gchar * en_name)
   gtk_entry_set_icon_from_stock (GTK_ENTRY (self->priv->tz_entry),
                                  GTK_ENTRY_ICON_SECONDARY, NULL);
 
+  GSettings * conf = g_settings_new (SETTINGS_INTERFACE);
   g_settings_set_string (conf, SETTINGS_TIMEZONE_NAME_S, en_name);
 }  
 
