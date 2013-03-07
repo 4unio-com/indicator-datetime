@@ -50,6 +50,9 @@ with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "dbus-shared.h"
 #include "settings-shared.h"
 #include "utils.h"
+#ifdef HAVE_SYSTEMD
+#include "timedated.h"
+#endif
 
 /* how often to check for clock skew */
 #define SKEW_CHECK_INTERVAL_SEC 10
@@ -1085,6 +1088,23 @@ timezone_changed (GFileMonitor * monitor, GFile * file, GFile * otherfile, GFile
 static void
 build_timezone (DatetimeInterface * dbus)
 {
+#ifdef HAVE_SYSTEMD
+	GCancellable * cancellable = g_cancellable_new ();
+	GError * error = NULL;
+	Timedate1 * dtm = timedate1_proxy_new_for_bus_sync (G_BUS_TYPE_SYSTEM,
+							G_DBUS_PROXY_FLAGS_NONE,
+							"org.freedesktop.timedate1",
+							"/org/freedesktop/timedate1",
+							cancellable,
+							&error);
+	if (dtm != NULL) {
+		g_signal_connect_swapped (dtm, "notify::timezone",
+					G_CALLBACK (timezone_changed), dbus);
+	} else {
+		g_warning ("could not get proxy for DateTimeMechanism: %s", error->message);
+		g_error_free (error);
+	}
+#else
 	GFile * timezonefile = g_file_new_for_path(TIMEZONE_FILE);
 	GFileMonitor * monitor = g_file_monitor_file(timezonefile, G_FILE_MONITOR_NONE, NULL, NULL);
 	if (monitor != NULL) {
@@ -1094,6 +1114,9 @@ build_timezone (DatetimeInterface * dbus)
 		g_warning("Unable to monitor timezone file: '" TIMEZONE_FILE "'");
 	}
 	g_object_unref(timezonefile);
+
+#endif  /* HAVE_SYSTEMD */
+
 	return;
 }
 

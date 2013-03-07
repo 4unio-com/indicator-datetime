@@ -31,6 +31,9 @@ with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <string.h>
 #include "utils.h"
 #include "settings-shared.h"
+#ifdef HAVE_SYSTEMD
+#include "timedated.h"
+#endif
 
 /* Check the system locale setting to see if the format is 24-hour
    time or 12-hour time */
@@ -121,6 +124,37 @@ gchar *
 read_timezone ()
 {
 	GError * error = NULL;
+
+#ifdef HAVE_SYSTEMD
+  const gchar * timezone;
+	GCancellable * cancellable = g_cancellable_new ();
+	Timedate1 * dtm = timedate1_proxy_new_for_bus_sync (G_BUS_TYPE_SYSTEM,
+							G_DBUS_PROXY_FLAGS_NONE,
+							"org.freedesktop.timedate1",
+							"/org/freedesktop/timedate1",
+							cancellable,
+							&error);
+	if (dtm) {
+		timezone = timedate1_get_timezone(dtm);
+	} else {
+		g_warning ("could not get proxy for DateTimeMechanism: %s", error->message);
+		g_error_free (error);
+		return NULL;
+	}
+
+  gchar * rv = g_strdup(timezone);
+
+	if (cancellable) {
+		g_cancellable_cancel (cancellable);
+		g_object_unref (cancellable);
+		cancellable = NULL;
+	}
+
+	if (dtm) {
+		g_object_unref (dtm);
+		dtm = NULL;
+	}
+#else
 	gchar * tempzone = NULL;
 	if (!g_file_get_contents(TIMEZONE_FILE, &tempzone, NULL, &error)) {
 		g_warning("Unable to read timezone file '" TIMEZONE_FILE "': %s", error->message);
@@ -137,6 +171,7 @@ read_timezone ()
 	   for everyone else. */
 	gchar * rv = g_strdup(g_strstrip(tempzone));
 	g_free(tempzone);
+#endif  /* HAVE_SYSTEMD */
 
   return rv;
 }

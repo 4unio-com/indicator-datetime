@@ -112,6 +112,18 @@ fi
 AM_CONDITIONAL(BUILD_CCPANEL, test x${have_ccpanel} = xyes)
 
 ###########################
+# systemd support
+###########################
+AC_ARG_ENABLE([systemd],
+	AC_HELP_STRING([--enable-systemd], [enable systemd support]),,
+	[enable_systemd=no])
+AM_CONDITIONAL([BUILD_SYSTEMD], [test "x$enable_systemd" != "xno"])
+
+if test "x$enable_systemd" != "xno"; then
+   AC_DEFINE(HAVE_SYSTEMD, 1, [Define to 1 to enable systemd support])
+fi
+
+###########################
 # Grab the GSettings Macros
 ###########################
 
@@ -253,6 +265,7 @@ Date and Time Indicator Configuration:
 	Indicator Dir: $INDICATORDIR
 	CC Panel:      $have_ccpanel
 	CC Panel Dir:  $CCPANELDIR
+	systemd:       $enable_systemd
 	Unit Tests:    $enable_tests
 	gcov:          $use_gcov
 ])

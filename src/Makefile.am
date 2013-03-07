@@ -4,6 +4,26 @@ ccpaneldir = $(CCPANELDIR)
 ccpanel_LTLIBRARIES = libindicator-datetime.la
 endif
 
+if BUILD_SYSTEMD
+# This requires running d-bus session and accessible timedate1 daemon
+# FIXME: need to find a way how to filter out unnecessary d-bus stuff (introspectable, properties)
+#timedated1-interface.xml:
+#	gdbus introspect					\
+#		--xml						\
+#		--system					\
+#		--dest org.freedesktop.timedate1		\
+#		--object-path /org/freedesktop/timedate1	\
+#		 > timedated1-interface.xml
+
+dbus_built_sources = timedated.c timedated.h
+timedated.c: timedated.h
+timedated.h: Makefile.am timedated1-interface.xml
+	gdbus-codegen						\
+		--interface-prefix org.freedesktop.		\
+		--generate-c-code timedated			\
+		$(srcdir)/timedated1-interface.xml
+endif
+
 libexec_PROGRAMS = indicator-datetime-service
 
 indicator_datetime_service_SOURCES = \
@@ -91,3 +111,13 @@ CLEANFILES = \
 
 EXTRA_DIST = \
 	datetime-service.xml
+
+if BUILD_SYSTEMD
+indicator_datetime_service_SOURCES += $(dbus_built_sources)
+libdatetime_la_SOURCES += $(dbus_built_sources)
+if BUILD_CCPANEL
+libindicator_datetime_la_SOURCES += $(dbus_built_sources)
+endif
+CLEANFILES += $(dbus_built_sources) 
+EXTRA_DIST += timedated1-interface.xml
+endif
