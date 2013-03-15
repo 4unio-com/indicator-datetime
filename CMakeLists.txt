@@ -20,5 +20,6 @@ add_definitions(-DGETTEXT_PACKAGE=\"indicator-datetime\")
 add_definitions(-DPACKAGE_NAME=\"indicator-datetime\")
 
 include_directories(${INDICATOR_INCLUDE_DIRS})
+include_directories(${CMAKE_CURRENT_BINARY_DIR}/src)
 
 add_subdirectory(src)
