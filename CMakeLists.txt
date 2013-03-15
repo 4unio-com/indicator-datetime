@@ -48,6 +48,9 @@ libgnome-control-center
 polkit-gobject-1
 )
 
+set(LIBDIR "lib" CACHE PATH "Destination install dir for shared libraries")
+set(CCPANELDIR "lib" CACHE PATH "Destination directory for the ccpanel library")
+
 include_directories(${SERVICE_INCLUDE_DIRS})
 
 add_definitions(-DGETTEXT_PACKAGE=\"indicator-datetime\")

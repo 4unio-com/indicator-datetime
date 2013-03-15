@@ -26,3 +26,19 @@ add_library(indicator-datetime SHARED
     utils.c
 )
 target_link_libraries(indicator-datetime ${CCPANEL_LDFLAGS})
+
+install(TARGETS indicator-datetime-service
+  ARCHIVE DESTINATION ${LIBDIR}
+  RUNTIME DESTINATION bin
+  LIBRARY DESTINATION ${LIBDIR}
+)
+
+install(TARGETS datetime
+  ARCHIVE DESTINATION ${LIBDIR}
+  RUNTIME DESTINATION bin
+  LIBRARY DESTINATION ${LIBDIR}
+)
+
+install(TARGETS indicator-datetime
+ LIBRARY DESTINATION ${CCPANELDIR}
+)
