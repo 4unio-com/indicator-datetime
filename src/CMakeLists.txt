@@ -1,7 +1,5 @@
 add_definitions(-DTIMEZONE_FILE=\"/etc/timezone\")
 
-include_directories(${SERVICE_INCLUDE_DIRS})
-
 add_library(datetime SHARED
     utils.c 
     indicator-datetime.c

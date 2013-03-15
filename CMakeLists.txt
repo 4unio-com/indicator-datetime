@@ -1,4 +1,4 @@
-project(indicator-datetime C)
+project(indicator-datetime C CXX)
 
 cmake_minimum_required(VERSION 2.8.9)
 option(full_warnings "Full compiler warnings." ON)
@@ -6,7 +6,12 @@ include(FindPkgConfig)
 
 if(${full_warnings})
   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -pedantic -Wextra")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -pedantic -Wextra")
 endif()
+
+enable_testing()
+
+find_program(SCHEMA_BUILDER "glib-compile-schemas")
 
 pkg_check_modules(INDICATOR REQUIRED
 indicator3-0.4>=0.3.19
@@ -32,9 +37,12 @@ cairo>=1.10
 gdk-3.0>=2.22
 )
 
+include_directories(${SERVICE_INCLUDE_DIRS})
+
 add_definitions(-DGETTEXT_PACKAGE=\"indicator-datetime\")
 add_definitions(-DPACKAGE_NAME=\"indicator-datetime\")
 
 include_directories(${CMAKE_CURRENT_BINARY_DIR}/src)
 
 add_subdirectory(src)
+add_subdirectory(tests)
