@@ -16,10 +16,25 @@ dbusmenu-gtk3-0.4>=0.5.90
 libido3-0.1>=0.2.2
 )
 
+pkg_check_modules(SERVICE REQUIRED
+indicator3-0.4>=0.3.19
+glib-2.0>=2.35.4
+dbusmenu-glib-0.4>=0.1.1
+dbusmenu-gtk3-0.4>=0.5.90
+libido3-0.1>=0.2.2
+gio-2.0>=2.25.11
+geoclue>=0.12.0
+libecal-1.2>=3.5
+libical>=0.48
+libedataserver-1.2>=3.5
+libedataserverui-3.0>=3.5
+cairo>=1.10
+gdk-3.0>=2.22
+)
+
 add_definitions(-DGETTEXT_PACKAGE=\"indicator-datetime\")
 add_definitions(-DPACKAGE_NAME=\"indicator-datetime\")
 
-include_directories(${INDICATOR_INCLUDE_DIRS})
 include_directories(${CMAKE_CURRENT_BINARY_DIR}/src)
 
 add_subdirectory(src)
