@@ -1,4 +1,8 @@
+# These settings are probably incorrect. These should
+# really be in a config.h file.
 add_definitions(-DTIMEZONE_FILE=\"/etc/timezone\")
+add_definitions(-DPKGDATADIR=\"/usr/share/indicator-datetime\")
+add_definitions(-DGNOMELOCALEDIR=\"/usr/share/locale\")
 
 add_library(datetime SHARED
     utils.c 
@@ -14,3 +18,11 @@ add_executable(indicator-datetime-service
     utils.c
 )
 target_link_libraries(indicator-datetime-service ${SERVICE_LDFLAGS})
+
+include_directories(${CCPANEL_INCLUDE_DIRS})
+add_library(indicator-datetime SHARED
+    datetime-prefs.c
+    datetime-prefs-locations.c
+    utils.c
+)
+target_link_libraries(indicator-datetime ${CCPANEL_LDFLAGS})

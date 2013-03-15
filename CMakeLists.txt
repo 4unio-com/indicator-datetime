@@ -40,6 +40,14 @@ cairo>=1.10
 gdk-3.0>=2.22
 )
 
+pkg_check_modules(CCPANEL REQUIRED
+gio-2.0
+gtk+-3.0
+timezonemap
+libgnome-control-center
+polkit-gobject-1
+)
+
 include_directories(${SERVICE_INCLUDE_DIRS})
 
 add_definitions(-DGETTEXT_PACKAGE=\"indicator-datetime\")
