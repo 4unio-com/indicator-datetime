@@ -13,6 +13,9 @@ enable_testing()
 
 find_program(SCHEMA_BUILDER "glib-compile-schemas")
 
+set(GTEST_SOURCE_DIR /usr/src/gtest/src)
+set(GTEST_INCLUDE_DIR ${GTEST_SOURCE_DIR}/..)
+
 pkg_check_modules(INDICATOR REQUIRED
 indicator3-0.4>=0.3.19
 glib-2.0>=2.35.4
