@@ -16,33 +16,48 @@ find_program(SCHEMA_BUILDER "glib-compile-schemas")
 set(GTEST_SOURCE_DIR /usr/src/gtest/src)
 set(GTEST_INCLUDE_DIR ${GTEST_SOURCE_DIR}/..)
 
+set(INDICATOR_REQUIRED_VERSION 0.3.19)
+set(DBUSMENUGLIB_REQUIRED_VERSION 0.1.1)
+set(DBUSMENUGTK_REQUIRED_VERSION 0.5.90)
+set(GIO_REQUIRED_VERSION 2.25.11)
+set(INDICATOR_DISPLAY_OBJECTS 0.2.2)
+set(GEOCLUE_REQUIRED_VERSION 0.12.0)
+set(ECAL_REQUIRED_VERSION 3.5)
+set(EDS_REQUIRED_VERSION 3.5)
+set(ICAL_REQUIRED_VERSION 0.48)
+set(CAIRO_REQUIRED_VERSION 1.10)
+set(GDK_REQUIRED_VERSION 2.22)
+set(GLIB_REQUIRED_VERSION 2.35.4)
+set(GTK3_REQUIRED_VERSION 3.1.4)
+
 pkg_check_modules(INDICATOR REQUIRED
-indicator3-0.4>=0.3.19
-glib-2.0>=2.35.4
-dbusmenu-glib-0.4>=0.1.1
-dbusmenu-gtk3-0.4>=0.5.90
-libido3-0.1>=0.2.2
+indicator3-0.4>=${INDICATOR_REQUIRED_VERSION}
+glib-2.0>=${GLIB_REQUIRED_VERSION}
+dbusmenu-glib-0.4>=${DBUSMENUGLIB_REQUIRED_VERSION}
+dbusmenu-gtk3-0.4>=${DBUSMENUGTK_REQUIRED_VERSION}
+libido3-0.1>=${INDICATOR_DISPLAY_OBJECTS}
 )
 
 pkg_check_modules(SERVICE REQUIRED
-indicator3-0.4>=0.3.19
-glib-2.0>=2.35.4
-dbusmenu-glib-0.4>=0.1.1
-dbusmenu-gtk3-0.4>=0.5.90
-libido3-0.1>=0.2.2
-gio-2.0>=2.25.11
-geoclue>=0.12.0
-libecal-1.2>=3.5
-libical>=0.48
-libedataserver-1.2>=3.5
-libedataserverui-3.0>=3.5
-cairo>=1.10
-gdk-3.0>=2.22
+indicator3-0.4>=${INDICATOR_REQUIRED_VERSION}
+glib-2.0>=${GLIB_REQUIRED_VERSION}
+dbusmenu-glib-0.4>=${DBUSMENUGLIB_REQUIRED_VERSION}
+dbusmenu-gtk3-0.4>=${DBUSMENUGTK_REQUIRED_VERSION}
+libido3-0.1>=${INDICATOR_DISPLAY_OBJECTS}
+gio-2.0>=${GIO_REQUIRED_VERSION}
+geoclue>=${GEOCLUE_REQUIRED_VERSION}
+libecal-1.2>=${ECAL_REQUIRED_VERSION}
+libical>=${ICAL_REQUIRED_VERSION}
+libedataserver-1.2>=${EDS_REQUIRED_VERSION}
+libedataserverui-3.0>=${EDS_REQUIRED_VERSION}
+cairo>=${CAIRO_REQUIRED_VERSION}
+gdk-3.0>=${GDK_REQUIRED_VERSION}
 )
 
+
 pkg_check_modules(CCPANEL REQUIRED
-gio-2.0
-gtk+-3.0
+gio-2.0>=${GIO_REQUIRED_VERSION}
+gtk+-3.0>=${GTK3_REQUIRED_VERSION}
 timezonemap
 libgnome-control-center
 polkit-gobject-1
