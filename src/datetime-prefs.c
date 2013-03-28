@@ -220,18 +220,30 @@ sync_entry (IndicatorDatetimePanel * self, const gchar * location)
 }
 
 static void
+sync_location (IndicatorDatetimePanel * self, const gchar * en_name)
+{
+  gtk_entry_set_text (GTK_ENTRY (self->priv->tz_entry), en_name);
+  gtk_entry_set_icon_from_stock (GTK_ENTRY (self->priv->tz_entry),
+                                 GTK_ENTRY_ICON_SECONDARY, NULL);
+
+  GSettings * conf = g_settings_new (SETTINGS_INTERFACE);
+  g_settings_set_string (conf, SETTINGS_TIMEZONE_NAME_S, en_name);
+}  
+
+static void
 tz_changed (CcTimezoneMap * map, CcTimezoneLocation * location, IndicatorDatetimePanel * self)
 {
   if (location == NULL)
     return;
 
-  gchar * zone;
+  gchar * zone, * name;
   g_object_get (location, "zone", &zone, NULL);
+  g_object_get (location, "en_name", &name, NULL);
 
   g_dbus_proxy_call (self->priv->proxy, "SetTimezone", g_variant_new ("(sb)", zone, TRUE),
                      G_DBUS_CALL_FLAGS_NONE, -1, NULL, dbus_set_answered, "timezone");
 
-  sync_entry (self, zone);
+  sync_location (self, name);
 
   g_free (zone);
 }
@@ -278,7 +290,25 @@ proxy_ready (GObject *object, GAsyncResult *res, IndicatorDatetimePanel * self)
         {
           const gchar *timezone = g_variant_get_string (value, NULL);
 
-          cc_timezone_map_set_timezone (priv->tzmap, timezone);
+          GSettings * conf = g_settings_new (SETTINGS_INTERFACE);
+          gdouble lon = g_settings_get_double(conf, SETTINGS_LOCATION_LONGITUDE);
+          gdouble lat = g_settings_get_double(conf, SETTINGS_LOCATION_LATITUDE);
+          gchar * saved_tz = g_settings_get_string (conf, SETTINGS_TIMEZONE_NAME_S);
+          gchar * saved_zone, * saved_name;
+
+          split_settings_location (saved_tz, &saved_zone, &saved_name);
+
+          if (g_strcmp0 (saved_zone, timezone) == 0) {
+                  cc_timezone_map_set_location (self->priv->tzmap, lon, lat);
+          } else {
+                  cc_timezone_map_set_timezone (self->priv->tzmap, timezone);
+          }
+
+          g_free (saved_tz);
+          g_free (saved_zone);
+          g_free (saved_name);
+          g_object_unref (conf);
+
           sync_entry (self, timezone);
           g_signal_connect (priv->tzmap, "location-changed", G_CALLBACK (tz_changed), self);
         }
@@ -572,6 +602,7 @@ timezone_selected (GtkEntryCompletion * widget, GtkTreeModel * model,
                    GtkTreeIter * iter, IndicatorDatetimePanel * self)
 {
   const gchar * name, * zone;
+  gdouble lon = 0.0, lat = 0.0;
 
   gtk_tree_model_get (model, iter,
                       CC_TIMEZONE_COMPLETION_NAME, &name,
@@ -580,7 +611,6 @@ timezone_selected (GtkEntryCompletion * widget, GtkTreeModel * model,
 
   if (zone == NULL || zone[0] == 0) {
     const gchar * strlon, * strlat;
-    gdouble lon = 0.0, lat = 0.0;
 
     gtk_tree_model_get (model, iter,
                         CC_TIMEZONE_COMPLETION_LONGITUDE, &strlon,
@@ -598,13 +628,13 @@ timezone_selected (GtkEntryCompletion * widget, GtkTreeModel * model,
     zone = cc_timezone_map_get_timezone_at_coords (self->priv->tzmap, lon, lat);
   }
 
+  cc_timezone_map_set_location (self->priv->tzmap, lon, lat);
+
   GSettings * conf = g_settings_new (SETTINGS_INTERFACE);
   gchar * tz_name = g_strdup_printf ("%s %s", zone, name);
   g_settings_set_string (conf, SETTINGS_TIMEZONE_NAME_S, tz_name);
   g_free (tz_name);
   g_object_unref (conf);
-
-  cc_timezone_map_set_timezone (self->priv->tzmap, zone);
 
   return FALSE; // Do normal action too
 }

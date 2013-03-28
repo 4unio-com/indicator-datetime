@@ -36,6 +36,8 @@ with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define SETTINGS_SHOW_DETECTED_S        "show-auto-detected-location"
 #define SETTINGS_LOCATIONS_S            "locations"
 #define SETTINGS_TIMEZONE_NAME_S        "timezone-name"
+#define SETTINGS_LOCATION_LONGITUDE     "location-longitude"
+#define SETTINGS_LOCATION_LATITUDE      "location-latitude"
 
 enum {
 	SETTINGS_TIME_LOCALE = 0,

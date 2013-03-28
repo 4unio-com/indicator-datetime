@@ -114,5 +114,19 @@
 			  Some timezones can be known by many different cities or names.  This setting describes how the current zone prefers to be named.  Format is "TIMEZONE NAME" (e.g. "America/New_York Boston" to name the New_York zone Boston).
 			</description>
 		</key>
+		<key name="location-longitude" type="d">
+			<default>0.0</default>
+			<summary>The longitude of the current location</summary>
+			<description>
+			  Some timezones can be known by many different cities or names.  This setting describes the longitudinal component of the coordinate for the location in timezone-name above.
+			</description>
+		</key>
+		<key name="location-latitude" type="d">
+			<default>0.0</default>
+			<summary>The latitude of the current location</summary>
+			<description>
+			  Some timezones can be known by many different cities or names.  This setting describes the latitudinal component of the coordinate for the location in timezone-name above.
+			</description>
+		</key>
 	</schema>
 </schemalist>
