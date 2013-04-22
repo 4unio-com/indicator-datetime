@@ -33,6 +33,7 @@ gchar * get_current_zone_name (const gchar * location);
 gchar * read_timezone ();
 gchar * generate_format_string_full (gboolean show_day, gboolean show_date);
 gchar * generate_format_string_at_time (GDateTime * time);
+gchar * format_date_time (GDateTime *datetime_now, const gchar *format_spec);
 
 G_END_DECLS
 

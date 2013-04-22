@@ -349,7 +349,7 @@ update_datetime (gpointer user_data)
 	}
 
 	/* eranslators: strftime(3) style date format on top of the menu when you click on the clock */
-        utf8 = g_date_time_format (datetime, _("%A, %e %B %Y"));
+	utf8 = format_date_time (datetime, _("%A, %e %B %Y"));
 
 	dbusmenu_menuitem_property_set(date, DBUSMENU_MENUITEM_PROP_LABEL, utf8);
 

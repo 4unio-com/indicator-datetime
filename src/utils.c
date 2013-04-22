@@ -301,3 +301,70 @@ generate_format_string_at_time (GDateTime * time)
 	return generate_format_string_full(show_day, show_date);
 }
 
+/* Translate names of days and months using the current language by
+   splitting a format specification and applying a suitable locale
+   when converting respective token. */
+gchar *
+format_date_time (GDateTime *datetime_now, const gchar *format_spec)
+{
+	gchar *formatted_string = NULL;
+	gchar *tmp = NULL;
+	gint i, j;
+
+	/* Probably unnecessary, but just in case... */
+	if (format_spec == NULL || strlen (format_spec) == 0)
+		return NULL;
+
+	gchar **tokens = g_strsplit (format_spec, " ", 0);
+
+	/* Conversion specifications for names of days and months */
+	const gchar *dm_names[] = { "%a", "%A", "%b", "%B", "%h", NULL };
+
+	/* Get some locale info, which in turn was taken from the
+	   locale environment via the setlocale(LC_ALL, "") call in
+	   main() in src/datetime-service.c. */
+	const gchar *time_locale = setlocale (LC_TIME, NULL);
+	const gchar *message_locale = setlocale (LC_MESSAGES, NULL);
+
+	for (i = 0; tokens[i] != NULL; i++)
+	{
+		gboolean is_day_month = FALSE;
+
+		for (j = 0; dm_names[j] != NULL; j++) {
+			if (g_strrstr (tokens[i], dm_names[j]) != NULL) {
+				is_day_month = TRUE;
+				break;
+			}
+		}
+
+		if (is_day_month)
+			setlocale (LC_TIME, message_locale);
+		else
+			setlocale (LC_TIME, time_locale);
+
+		gchar *formatted_token = g_date_time_format (datetime_now, tokens[i]);
+		if (formatted_token == NULL) {
+			g_free (formatted_token);
+			goto out;
+		}
+
+		if (i == 0)
+			tmp = g_strdup (formatted_token);
+		else
+			tmp = g_strjoin (" ", tmp, formatted_token, NULL);
+
+		g_free (formatted_token);
+	}
+
+	formatted_string = g_strdup (tmp);
+
+out:
+	g_strfreev (tokens);
+	g_free (tmp);
+
+	/* Reset the locale */
+	setlocale (LC_TIME, time_locale);
+
+	return formatted_string;
+}
+

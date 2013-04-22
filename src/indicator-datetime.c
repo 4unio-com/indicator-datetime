@@ -741,11 +741,11 @@ set_label_to_time_in_zone (IndicatorDatetime * self, GtkLabel * label,
 	gchar * timestr;
 	if (format == NULL) {
 		gchar * format_for_time = generate_format_string_at_time(datetime_now);
-		timestr = g_date_time_format(datetime_now, format_for_time);
+		timestr = format_date_time(datetime_now, format_for_time);
 		g_free(format_for_time);
 	}
 	else {
-		timestr = g_date_time_format(datetime_now, format);
+		timestr = format_date_time(datetime_now, format);
 		if (timestr == NULL) {
 			g_warning ("The custom date format is not valid, check the\n"
 			           "g_date_time_format() documentation for the supported\n"
