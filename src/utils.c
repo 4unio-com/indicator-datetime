@@ -297,8 +297,8 @@ get_terse_date_format_string (date_proximity_t proximity)
 const gchar*
 get_terse_header_time_format_string (void)
 {
-  /* a strftime(3) fmt string for a H:MM 12 hour time, eg "6:59 PM" */
-  return T_("%l:%M %p");
+  /* a strftime(3) fmt string for a H:MM 24 hour time, eg "17:59" */
+  return T_("%H:%M");
 }
 
 const gchar *
