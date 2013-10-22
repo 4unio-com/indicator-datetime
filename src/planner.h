@@ -40,10 +40,8 @@ GType indicator_datetime_planner_get_type (void);
 
 struct IndicatorDatetimeAppt
 {
-  gchar * color;
-  gchar * summary;
-  gchar * url;
-  gchar * uid;
+  char * color;
+  char * summary;
   GDateTime * begin;
   GDateTime * end;
   gboolean is_event;
