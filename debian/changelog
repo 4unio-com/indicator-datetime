@@ -1,27 +1,4 @@
-indicator-datetime (13.10.0+13.10.20131023.2-0ubuntu1) saucy; urgency=low
-
-  [ Charles Kerr ]
-  * == Changes to planner-eds: The get-appointments GTask has a new task
-    subtype for pulling an ECalComponent's uris asynchronously. When
-    get_appointments() is called, create one GTask. We add subtasks to
-    it for each client we know of for calling
-    e_cal_client_generate_instances(). What's new is that for each
-    ECalComponent we find in generate_instances(), we add another new
-    subtask that tries to get the uris for that component. == Testing
-    changes: Make "planner" a property in IndicatorDatetimeService so
-    that we can swap in different appointment planners at runtime. This
-    is for unit testing purposes. Add a mechanism for testing snap
-    decisions without an EDS backend. == Service changes: Every time the
-    appointment list changes, walk through it to find the alarm that
-    will occur the soonest. Set a timer to wake up at that time. When
-    the timer is reached, pop up a snap decision for each alarm set to
-    that time. If the user clicks "OK", dispatch the URL associated with
-    that alarm. Made the appointment menuitems clickable, they now
-    dispatch the appointment's URL. (LP: #1233176)
-
-  [ Mathieu Trudel-Lapierre ]
-  * Revert revision 277 which appears to be more feature than bugfix
-    applicable for SRU.
+indicator-datetime (13.10.0+13.10.20131023.2-0ubuntu1) saucy-proposed; urgency=low
 
   [ Marcus Tomlinson ]
   * Fixed datetime title text to read "Date and Time" rather than the
@@ -34,7 +11,7 @@ indicator-datetime (13.10.0+13.10.20131023.2-0ubuntu1) saucy; urgency=low
   [ Ubuntu daily release ]
   * Automatic snapshot from revision 279
 
- -- Ubuntu daily release <ps-jenkins@lists.canonical.com>  Wed, 23 Oct 2013 15:44:31 +0000
+ -- Mathieu Trudel-Lapierre <mathieu-tl@ubuntu.com>  Mon, 28 Oct 2013 14:59:27 -0400
 
 indicator-datetime (13.10.0+13.10.20131016.2-0ubuntu1) saucy; urgency=low
 
