@@ -862,14 +862,12 @@ on_current_timezone_changed (IndicatorDatetimeService * self)
 }
 
 /* When the 'auto-detect timezone' boolean setting changes,
-   start or stop watching geoclue and /etc/timezone */
+   start or stop watching geoclue */
 static void
-set_detect_location_enabled (IndicatorDatetimeService * self, gboolean enabled)
+set_geoclue_enabled (IndicatorDatetimeService * self, gboolean enabled)
 {
   gboolean changed = FALSE;
   priv_t * p = self->priv;
-
-  /* geoclue */
 
   if (!p->tz_geoclue && enabled)
     {
@@ -885,25 +883,6 @@ set_detect_location_enabled (IndicatorDatetimeService * self, gboolean enabled)
                                             on_current_timezone_changed,
                                             self);
       g_clear_object (&p->tz_geoclue);
-      changed = TRUE;
-    }
-
-  /* timezone file */
-
-  if (!p->tz_file && enabled)
-    {
-      p->tz_file = indicator_datetime_timezone_file_new (TIMEZONE_FILE);
-      g_signal_connect_swapped (p->tz_file, "notify::timezone",
-                                G_CALLBACK(on_current_timezone_changed),
-                                self);
-      changed = TRUE;
-    }
-  else if (p->tz_file && !enabled)
-    {
-      g_signal_handlers_disconnect_by_func (p->tz_file,
-                                            on_current_timezone_changed,
-                                            self);
-      g_clear_object (&p->tz_file);
       changed = TRUE;
     }
 
@@ -1000,8 +979,8 @@ create_locations_section (IndicatorDatetimeService * self)
   priv_t * p = self->priv;
   GDateTime * now = indicator_datetime_service_get_localtime (self);
 
-  set_detect_location_enabled (self,
-                               g_settings_get_boolean (p->settings, SETTINGS_SHOW_DETECTED_S));
+  set_geoclue_enabled (self,
+                       g_settings_get_boolean (p->settings, SETTINGS_SHOW_DETECTED_S));
 
   menu = g_menu_new ();
 
@@ -1821,7 +1800,13 @@ my_dispose (GObject * o)
       g_clear_object (&p->cancellable);
     }
 
-  set_detect_location_enabled (self, FALSE);
+  if (p->tz_file != NULL)
+    {
+      g_signal_handlers_disconnect_by_func (p->tz_file, on_current_timezone_changed, o);
+      g_clear_object (&p->tz_file);
+    }
+
+  set_geoclue_enabled (self, FALSE);
 
   if (p->planner != NULL)
     {
@@ -2006,6 +1991,11 @@ indicator_datetime_service_init (IndicatorDatetimeService * self)
                               on_name_lost,
                               self,
                               NULL);
+
+  p->tz_file = indicator_datetime_timezone_file_new (TIMEZONE_FILE);
+  g_signal_connect_swapped (p->tz_file, "notify::timezone",
+                            G_CALLBACK(on_current_timezone_changed),
+                            self);
 
   on_local_time_jumped (self);
 
