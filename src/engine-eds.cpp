@@ -323,6 +323,23 @@ private:
         static_cast<Impl*>(gself)->set_dirty_soon();
     }
 
+    void remove_view(ESource* source, ECalClientView* view)
+    {
+        g_return_if_fail (view != NULL);
+
+        // remove it from our lookup
+        m_views.erase(source);
+
+        // disconnect & unref
+        e_cal_client_view_stop(view, nullptr);
+        const auto n_disconnected = g_signal_handlers_disconnect_by_data(view, this);
+        g_warn_if_fail(n_disconnected == 3);
+        g_object_unref(view);
+
+        // queue a refresh
+        set_dirty_soon();
+    }
+
     static void on_source_disabled(ESourceRegistry* /*registry*/, ESource* source, gpointer gself)
     {
         static_cast<Impl*>(gself)->disable_source(source);
@@ -332,15 +349,7 @@ private:
         // if an ECalClientView is associated with this source, remove it
         auto vit = m_views.find(source);
         if (vit != m_views.end())
-        {
-            auto& view = vit->second;
-            e_cal_client_view_stop(view, nullptr);
-            const auto n_disconnected = g_signal_handlers_disconnect_by_data(view, this);
-            g_warn_if_fail(n_disconnected == 3);
-            g_object_unref(view);
-            m_views.erase(vit);
-            set_dirty_soon();
-        }
+            remove_view (vit->first, vit->second);
 
         // if an ECalClient is associated with this source, remove it
         auto cit = m_clients.find(source);
