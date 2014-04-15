@@ -24,6 +24,8 @@
 #include <datetime/date-time.h>
 #include <datetime/timezone.h>
 
+#include <core/property.h>
+
 #include <functional>
 #include <vector>
 
@@ -46,12 +48,9 @@ class Engine
 public:
     virtual ~Engine() =default;
 
-    virtual void get_appointments(const DateTime& begin,
-                                  const DateTime& end,
-                                  const Timezone& default_timezone,
-                                  std::function<void(const std::vector<Appointment>&)> appointment_func) =0;
+    virtual core::Property<std::vector<Appointment>>& appointments() =0;
 
-    virtual core::Signal<>& changed() =0;
+    virtual void set_range (const DateTime& begin, const DateTime& end) =0;
 
 protected:
     Engine() =default;

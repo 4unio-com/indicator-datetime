@@ -25,6 +25,12 @@
 #include <ctime> // time_t
 #include <memory> // std::shared_ptr
 
+extern "C"
+{
+    #include <libecal/libecal.h>
+  //ECalComponentDateTime;
+}
+
 namespace unity {
 namespace indicator {
 namespace datetime {
@@ -39,6 +45,7 @@ public:
     static DateTime Local(int years, int months, int days, int hours, int minutes, int seconds);
 
     explicit DateTime(time_t t);
+    explicit DateTime(const ECalComponentDateTime&);
     explicit DateTime(GDateTime* in=nullptr);
     DateTime& operator=(GDateTime* in);
     DateTime& operator=(const DateTime& in);

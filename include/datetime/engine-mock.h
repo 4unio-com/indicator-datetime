@@ -40,21 +40,11 @@ class MockEngine: public Engine
 public:
     MockEngine() =default;
     ~MockEngine() =default;
-
-    void get_appointments(const DateTime& /*begin*/,
-                          const DateTime& /*end*/,
-                          const Timezone& /*default_timezone*/,
-                          std::function<void(const std::vector<Appointment>&)> appointment_func) {
-        appointment_func(m_appointments);
-    }
-
-    core::Signal<>& changed() {
-        return m_changed;
-    }
+    virtual core::Property<std::vector<Appointment>>& appointments() { return m_appointments; }
+    virtual void set_range (const DateTime&, const DateTime&) {}
 
 private:
-    core::Signal<> m_changed;
-    std::vector<Appointment> m_appointments;
+    core::Property<std::vector<Appointment>> m_appointments;
 };
 
 /***

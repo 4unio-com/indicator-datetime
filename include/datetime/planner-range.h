@@ -69,7 +69,7 @@ private:
     std::shared_ptr<Engine> m_engine;
     std::shared_ptr<Timezone> m_timezone;
     core::Property<std::pair<DateTime,DateTime>> m_range;
-    core::Property<std::vector<Appointment>> m_appointments;
+//    core::Property<std::vector<Appointment>> m_appointments;
 
     // we've got a GSignal tag here, so disable copying
     SimpleRangePlanner(const RangePlanner&) =delete;

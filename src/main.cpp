@@ -56,11 +56,14 @@ main(int /*argc*/, char** /*argv*/)
 
     // we don't show appointments in the greeter,
     // so no need to connect to EDS there...
-    std::shared_ptr<Engine> engine;
-    if (!g_strcmp0("lightdm", g_get_user_name()))
-        engine.reset(new MockEngine);
-    else
-        engine.reset(new EdsEngine);
+    std::shared_ptr<Engine> engines[3];
+    for(int i=0; i<3; i++)
+    {
+        if (!g_strcmp0("lightdm", g_get_user_name()))
+            engines[i] = std::make_shared<MockEngine>();
+        else
+            engines[i] = std::make_shared<EdsEngine>();
+    }
 
     // build the state, actions, and menufactory
     std::shared_ptr<State> state(new State);
@@ -72,14 +75,14 @@ main(int /*argc*/, char** /*argv*/)
     state->settings = live_settings;
     state->clock = live_clock;
     state->locations.reset(new SettingsLocations(live_settings, live_timezones));
-    auto calendar_month = new MonthPlanner(std::shared_ptr<RangePlanner>(new SimpleRangePlanner(engine, file_timezone)), now);
+    auto calendar_month = new MonthPlanner(std::shared_ptr<RangePlanner>(new SimpleRangePlanner(engines[0], file_timezone)), now);
     state->calendar_month.reset(calendar_month);
-    state->calendar_upcoming.reset(new UpcomingPlanner(std::shared_ptr<RangePlanner>(new SimpleRangePlanner(engine, file_timezone)), now));
+    state->calendar_upcoming.reset(new UpcomingPlanner(std::shared_ptr<RangePlanner>(new SimpleRangePlanner(engines[1], file_timezone)), now));
     std::shared_ptr<Actions> actions(new LiveActions(state));
     MenuFactory factory(actions, state);
 
     // snap decisions
-    std::shared_ptr<UpcomingPlanner> upcoming_planner(new UpcomingPlanner(std::shared_ptr<RangePlanner>(new SimpleRangePlanner(engine, file_timezone)), now));
+    std::shared_ptr<UpcomingPlanner> upcoming_planner(new UpcomingPlanner(std::shared_ptr<RangePlanner>(new SimpleRangePlanner(engines[2], file_timezone)), now));
     ClockWatcherImpl clock_watcher(live_clock, upcoming_planner);
     Snap snap;
     clock_watcher.alarm_reached().connect([&snap](const Appointment& appt){

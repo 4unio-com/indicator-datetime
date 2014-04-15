@@ -47,13 +47,8 @@ class EdsEngine: public Engine
 public:
     EdsEngine();
     ~EdsEngine();
-
-    void get_appointments(const DateTime& begin,
-                          const DateTime& end,
-                          const Timezone& default_timezone,
-                          std::function<void(const std::vector<Appointment>&)> appointment_func);
-
-    core::Signal<>& changed();
+    core::Property<std::vector<Appointment>>& appointments();
+    void set_range (const DateTime& begin, const DateTime& end);
 
 private:
     class Impl;

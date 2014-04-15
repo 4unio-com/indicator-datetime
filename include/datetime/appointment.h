@@ -40,7 +40,6 @@ public:
     std::string url;
     std::string uid;
     bool is_event = false;
-    bool is_daily = false;
     bool has_alarms = false;
     DateTime begin;
     DateTime end;

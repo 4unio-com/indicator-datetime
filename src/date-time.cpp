@@ -19,6 +19,14 @@
 
 #include <datetime/date-time.h>
 
+extern "C"
+{
+    #include <libical/ical.h>
+    #include <libical/icaltime.h>
+    #include <libecal/libecal.h>
+    #include <libedataserver/libedataserver.h>
+}
+
 namespace unity {
 namespace indicator {
 namespace datetime {
@@ -29,6 +37,62 @@ namespace datetime {
 
 DateTime::DateTime(GDateTime* gdt)
 {
+    reset(gdt);
+}
+
+#if 0
+DateTime::DateTime(const struct icaltimetype& t)
+{
+    const char* tzid = icaltime_get_tzid(t);
+
+    GTimeZone* gtz;
+    if (tzid)
+        gtz = g_time_zone_new (tzid);
+    else
+        gtz = nullptr;
+
+    GDateTime* gdt;
+    if (gtz)
+        gdt = g_date_time_new (gtz, t.year, t.month, t.day, t.hour, t.minute, t.second);
+    else
+        gdt = g_date_time_new_local (t.year, t.month, t.day, t.hour, t.minute, t.second);
+
+    reset(gdt);
+
+    g_clear_pointer(&gtz, g_time_zone_unref);
+}
+#endif
+
+DateTime::DateTime(const ::ECalComponentDateTime& ecc)
+{
+    GDateTime* gdt = nullptr;
+
+    if (ecc.value != nullptr)
+    {
+        const auto& t = *ecc.value;
+
+//        const char* tzid = ecc.tzid ? ecc.tzid : icaltime_get_tzid(t);
+        auto tzid = ecc.tzid ? ecc.tzid : icaltime_get_tzid(t);
+
+g_message ("%s", tzid);
+        if (tzid != nullptr) 
+            tzid = e_cal_match_tzid(tzid);
+g_message ("%s", tzid);
+
+        GTimeZone* gtz;
+        if (tzid)
+            gtz = g_time_zone_new (tzid);
+        else
+            gtz = nullptr;
+
+        if (gtz)
+            gdt = g_date_time_new (gtz, t.year, t.month, t.day, t.hour, t.minute, t.second);
+        else
+            gdt = g_date_time_new_local (t.year, t.month, t.day, t.hour, t.minute, t.second);
+
+        g_clear_pointer(&gtz, g_time_zone_unref);
+    }
+
     reset(gdt);
 }
 

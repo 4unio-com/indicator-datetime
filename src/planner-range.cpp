@@ -33,11 +33,6 @@ SimpleRangePlanner::SimpleRangePlanner(const std::shared_ptr<Engine>& engine,
     m_timezone(timezone),
     m_range(std::pair<DateTime,DateTime>(DateTime::NowLocal(), DateTime::NowLocal()))
 {
-    engine->changed().connect([this](){
-        g_debug("RangePlanner %p rebuilding soon because Engine %p emitted 'changed' signal%p", this, m_engine.get());
-        rebuild_soon();
-    });
-
     range().changed().connect([this](const std::pair<DateTime,DateTime>&){
         g_debug("rebuilding because the date range changed");
         rebuild_soon();
@@ -57,13 +52,7 @@ SimpleRangePlanner::~SimpleRangePlanner()
 void SimpleRangePlanner::rebuild_now()
 {
     const auto& r = range().get();
-
-    auto on_appointments_fetched = [this](const std::vector<Appointment>& a){
-        g_debug("RangePlanner %p got %zu appointments", this, a.size());
-        appointments().set(a);
-    };
-
-    m_engine->get_appointments(r.first, r.second, *m_timezone.get(), on_appointments_fetched);
+    m_engine->set_range(r.first, r.second);
 }
 
 void SimpleRangePlanner::rebuild_soon()
@@ -88,7 +77,7 @@ gboolean SimpleRangePlanner::rebuild_now_static(gpointer gself)
 
 core::Property<std::vector<Appointment>>& SimpleRangePlanner::appointments()
 {
-    return m_appointments;
+    return m_engine->appointments();
 }
 
 core::Property<std::pair<DateTime,DateTime>>& SimpleRangePlanner::range()
