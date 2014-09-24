@@ -22,10 +22,23 @@
 
 #include <datetime/date-time.h>
 #include <string>
+#include <chrono>
+#include <utility>
+#include <vector>
 
 namespace unity {
 namespace indicator {
 namespace datetime {
+
+struct Alarm
+{
+    std::string text;
+    std::string audio_url;
+    DateTime time;
+    std::chrono::seconds duration;
+
+    bool operator== (const Alarm& that) const;
+};
 
 /**
  * \brief Plain Old Data Structure that represents a calendar appointment.
@@ -35,14 +48,16 @@ namespace datetime {
 struct Appointment
 {
 public:
+    enum Type { EVENT, TODO };
+    Type type = EVENT;
+
+    std::string uid;
     std::string color; 
     std::string summary;
-    std::string url;
-    std::string uid;
-    std::string audio_url;
-    bool has_alarms = false;
     DateTime begin;
     DateTime end;
+
+    std::vector<Alarm> alarms;
 
     bool operator== (const Appointment& that) const;
 };

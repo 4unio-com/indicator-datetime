@@ -39,20 +39,12 @@ public:
                      const std::shared_ptr<Planner>& upcoming_planner,
                      const std::shared_ptr<WakeupTimer>& timer);
     ~SimpleAlarmQueue();
-    core::Signal<const Appointment&>& alarm_reached();
+    core::Signal<const Appointment&, const Alarm&>& alarm_reached();
 
 private:
-    void requeue();
-    bool find_next_alarm(Appointment& setme) const;
-    std::vector<Appointment> find_current_alarms() const;
-    void check_alarms();
-
-    std::set<std::pair<std::string,DateTime>> m_triggered;
-    const std::shared_ptr<Clock> m_clock;
-    const std::shared_ptr<Planner> m_planner;
-    const std::shared_ptr<WakeupTimer> m_timer;
-    core::Signal<const Appointment&> m_alarm_reached;
-    DateTime m_datetime;
+    class Impl;
+    friend class Impl;
+    std::unique_ptr<Impl> impl;
 };
 
 

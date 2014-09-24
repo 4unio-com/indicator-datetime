@@ -60,20 +60,15 @@ public:
     }
 
     void operator()(const Appointment& appointment,
+                    const Alarm& alarm,
                     appointment_func snooze,
                     appointment_func ok)
     {
-        if (!appointment.has_alarms)
-        {
-            ok(appointment);
-            return;
-        }
-
         // force the system to stay awake
         auto awake = std::make_shared<uin::Awake>(m_engine->app_name());
 
         // create the sound...
-        const auto uri = get_alarm_uri(appointment, m_settings);
+        const auto uri = get_alarm_uri(alarm, m_settings);
         const auto volume = m_settings->alarm_volume.get();
         const bool loop = m_engine->supports_actions();
         auto sound = std::make_shared<uin::Sound>(uri, volume, loop);
@@ -85,10 +80,9 @@ public:
             haptic = std::make_shared<uin::Haptic>(uin::Haptic::MODE_PULSE);
 
         // show a notification...
-        const auto minutes = std::chrono::minutes(m_settings->alarm_duration.get());
         const bool interactive = m_engine->supports_actions();
         uin::Builder b;
-        b.set_body (appointment.summary);
+        b.set_body (alarm.text);
         b.set_icon_name ("alarm-clock");
         b.add_hint (uin::Builder::HINT_SNAP);
         b.add_hint (uin::Builder::HINT_AFFIRMATIVE_HINT);
@@ -108,7 +102,13 @@ public:
         auto title = g_strdup_printf(_("Alarm %s"), timestr.c_str());
         b.set_title (title);
         g_free (title);
-        b.set_timeout (std::chrono::duration_cast<std::chrono::seconds>(minutes));
+        if (alarm.duration != std::chrono::seconds::zero())
+            b.set_timeout(alarm.duration);
+        else {
+            const auto minutes = std::chrono::minutes(m_settings->alarm_duration.get());
+            b.set_timeout(std::chrono::duration_cast<std::chrono::seconds>(minutes));
+        }
+
         if (interactive) {
             b.add_action ("ok", _("OK"));
             b.add_action ("snooze", _("Snooze"));
@@ -132,12 +132,12 @@ public:
 
 private:
 
-    std::string get_alarm_uri(const Appointment& appointment,
+    std::string get_alarm_uri(const Alarm& alarm,
                               const std::shared_ptr<const Settings>& settings) const
     {
         const char* FALLBACK {"/usr/share/sounds/ubuntu/ringtones/Suru arpeggio.ogg"};
 
-        const std::string candidates[] = { appointment.audio_url,
+        const std::string candidates[] = { alarm.audio_url,
                                            settings->alarm_sound.get(),
                                            FALLBACK };
 
@@ -186,10 +186,11 @@ Snap::~Snap()
 
 void
 Snap::operator()(const Appointment& appointment,
+                 const Alarm& alarm,
                  appointment_func show,
                  appointment_func ok)
 {
-  (*impl)(appointment, show, ok);
+  (*impl)(appointment, alarm, show, ok);
 }
 
 /***

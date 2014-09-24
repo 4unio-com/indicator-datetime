@@ -106,13 +106,12 @@ protected:
     // init the Appointment
     appt.color = "green";
     appt.summary = "Alarm";
-    appt.url = "alarm:///hello-world";
     appt.uid = "D4B57D50247291478ED31DED17FF0A9838DED402";
-    appt.has_alarms = true;
     auto begin = g_date_time_new_local(2014,12,25,0,0,0);
     auto end = g_date_time_add_full(begin,0,0,1,0,0,-1);
     appt.begin = begin;
     appt.end = end;
+    appt.alarms.push_back(Alarm{"Alarm Text", "", appt.begin, std::chrono::seconds::zero()});
     g_date_time_unref(end);
     g_date_time_unref(begin);
 
@@ -347,7 +346,7 @@ TEST_F(SnapFixture, InteractiveDuration)
 
   // call the Snap Decision
   auto func = [this](const Appointment&){g_idle_add(quit_idle, loop);};
-  snap(appt, func, func);
+  snap(appt, appt.alarms.front(), func, func);
 
   // confirm that Notify got called once
   guint len = 0;
@@ -397,7 +396,7 @@ TEST_F(SnapFixture, InhibitSleep)
 
   // invoke the notification
   auto func = [this](const Appointment&){g_idle_add(quit_idle, loop);};
-  (*snap)(appt, func, func);
+  (*snap)(appt, appt.alarms.front(), func, func);
 
   wait_msec(1000);
 
@@ -452,7 +451,7 @@ TEST_F(SnapFixture, ForceScreen)
 
   // invoke the notification
   auto func = [this](const Appointment&){g_idle_add(quit_idle, loop);};
-  (*snap)(appt, func, func);
+  (*snap)(appt, appt.alarms.front(), func, func);
 
   wait_msec(1000);
 
@@ -494,7 +493,7 @@ TEST_F(SnapFixture, HapticModes)
   // confirm that VibratePattern got called
   settings->alarm_haptic.set("pulse");
   auto snap = new Snap (ne, settings);
-  (*snap)(appt, func, func);
+  (*snap)(appt, appt.alarms.front(), func, func);
   wait_msec(100);
   EXPECT_TRUE (dbus_test_dbus_mock_object_check_method_call (haptic_mock,
                                                              haptic_obj,
@@ -509,7 +508,7 @@ TEST_F(SnapFixture, HapticModes)
   dbus_test_dbus_mock_object_clear_method_calls (haptic_mock, haptic_obj, &error);
   settings->alarm_haptic.set("none");
   snap = new Snap (ne, settings);
-  (*snap)(appt, func, func);
+  (*snap)(appt, appt.alarms.front(), func, func);
   wait_msec(100);
   EXPECT_FALSE (dbus_test_dbus_mock_object_check_method_call (haptic_mock,
                                                               haptic_obj,

@@ -312,17 +312,14 @@ TEST_F(LiveActionsFixture, PhoneOpenAppointment)
 
     a.uid = "some-uid";
     a.begin = DateTime::NowLocal();
-    a.has_alarms = false;
+    a.type = Appointment::EVENT;
     m_actions->phone_open_appointment(a);
     EXPECT_EQ(calendar_app_url, m_live_actions->last_url);
 
-    a.has_alarms = true;
+    a.type = Appointment::TODO;
+    a.alarms.push_back(Alarm{});
     m_actions->phone_open_appointment(a);
     EXPECT_EQ(clock_app_url, m_live_actions->last_url);
-
-    a.url = "appid://blah";
-    m_actions->phone_open_appointment(a);
-    EXPECT_EQ(a.url, m_live_actions->last_url);
 }
 
 TEST_F(LiveActionsFixture, PhoneOpenCalendarApp)
@@ -397,7 +394,6 @@ TEST_F(LiveActionsFixture, CalendarState)
     Appointment a1;
     a1.color = "green";
     a1.summary = "write unit tests";
-    a1.url = "http://www.ubuntu.com/";
     a1.uid = "D4B57D50247291478ED31DED17FF0A9838DED402";
     a1.begin = tomorrow_begin;
     a1.end = tomorrow_end;
@@ -407,7 +403,6 @@ TEST_F(LiveActionsFixture, CalendarState)
     Appointment a2;
     a2.color = "orange";
     a2.summary = "code review";
-    a2.url = "http://www.ubuntu.com/";
     a2.uid = "2756ff7de3745bbffd65d2e4779c37c7ca60d843";
     a2.begin = next_begin;
     a2.end = next_end;

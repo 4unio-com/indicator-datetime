@@ -186,20 +186,17 @@ private:
         const auto tomorrow = DateTime(gdt_tomorrow);
         g_date_time_unref(gdt_tomorrow);
 
-        Appointment a1; // an alarm clock appointment
+        Appointment a1; // an appointment with alarms
         a1.color = "red";
         a1.summary = "Alarm";
-        a1.summary = "http://www.example.com/";
         a1.uid = "example";
-        a1.has_alarms = true;
         a1.begin = a1.end = tomorrow;
+        a1.alarms.push_back(Alarm{"Alarm Text", "", a1.begin, std::chrono::seconds::zero()});
 
-        Appointment a2; // a non-alarm appointment
+        Appointment a2; // an appointment with no alarms
         a2.color = "green";
         a2.summary = "Other Text";
-        a2.summary = "http://www.monkey.com/";
         a2.uid = "monkey";
-        a2.has_alarms = false;
         a2.begin = a2.end = tomorrow;
 
         return std::vector<Appointment>({a1, a2});
@@ -212,10 +209,10 @@ private:
         //  confirm it has the right x-canonical-type
         gchar * str = nullptr;
         g_menu_model_get_item_attribute(section, index, "x-canonical-type", "s", &str);
-        if (appt.has_alarms)
-            EXPECT_STREQ("com.canonical.indicator.alarm", str);
-        else
+        if (appt.alarms.empty())
             EXPECT_STREQ("com.canonical.indicator.appointment", str);
+        else
+            EXPECT_STREQ("com.canonical.indicator.alarm", str);
         g_clear_pointer(&str, g_free);
 
         // confirm it has a nonempty x-canonical-time-format
@@ -245,7 +242,7 @@ private:
         g_clear_pointer(&str, g_free);
 
         // confirm that alarms have an icon
-        if (appt.has_alarms)
+        if (!appt.alarms.empty())
         {
             auto v = g_menu_model_get_item_attribute_value(section,
                                                            index,

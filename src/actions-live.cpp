@@ -136,12 +136,12 @@ void LiveActions::phone_open_alarm_app()
 
 void LiveActions::phone_open_appointment(const Appointment& appt)
 {
-    if (!appt.url.empty())
-        dispatch_url(appt.url);
-    else if (appt.has_alarms)
+    if (appt.type == Appointment::TODO)
         phone_open_alarm_app();
-    else
+    else if (appt.type == Appointment::EVENT)
         phone_open_calendar_app(DateTime::NowLocal());
+    else
+        g_warn_if_reached();
 }
 
 void LiveActions::phone_open_calendar_app(const DateTime&)

@@ -67,9 +67,7 @@ int main(int argc, const char* argv[])
     Appointment a;
     a.color = "green";
     a.summary = "Alarm";
-    a.url = "alarm:///hello-world";
     a.uid = "D4B57D50247291478ED31DED17FF0A9838DED402";
-    a.has_alarms = true;
     auto begin = g_date_time_new_local(2014,12,25,0,0,0);
     auto end = g_date_time_add_full(begin,0,0,1,0,0,-1);
     a.begin = begin;
@@ -77,9 +75,14 @@ int main(int argc, const char* argv[])
     g_date_time_unref(end);
     g_date_time_unref(begin);
 
+    Alarm alarm;
+    alarm.text = "Alarm";
+    alarm.time = a.begin;
+    a.alarms.push_back(alarm);
+
     auto loop = g_main_loop_new(nullptr, false);
     auto on_snooze = [loop](const Appointment& appt){
-        g_message("You clicked 'Snooze' for appt url '%s'", appt.url.c_str());
+        g_message("You clicked 'Snooze' for appt '%s'", appt.summary.c_str());
         g_idle_add(quit_idle, loop);
     };
     auto on_ok = [loop](const Appointment&){
@@ -97,7 +100,7 @@ int main(int argc, const char* argv[])
 
     auto notification_engine = std::make_shared<uin::Engine>("indicator-datetime-service");
     Snap snap (notification_engine, settings);
-    snap(a, on_snooze, on_ok);
+    snap(a, a.alarms.front(), on_snooze, on_ok);
     g_main_loop_run(loop);
 
     g_main_loop_unref(loop);
