@@ -34,6 +34,7 @@ namespace indicator {
 namespace datetime {
 
 static constexpr char const * TAG_ALARM {"x-canonical-alarm"};
+static constexpr char const * TAG_DISABLED {"x-canonical-disabled"};
 
 /****
 *****
@@ -483,19 +484,27 @@ private:
                      uid,
                      (int)status);
 
+            // look for the in-house tags
+            bool disabled = false;
+            bool ubuntu_alarm = false;
+            GSList * categ_list = nullptr;
+            e_cal_component_get_categories_list (component, &categ_list);
+            for (GSList * l=categ_list; l!=nullptr; l=l->next) {
+                auto tag = static_cast<const char*>(l->data);
+                if (!g_strcmp0(tag, TAG_ALARM))
+                    ubuntu_alarm = true;
+                if (!g_strcmp0(tag, TAG_DISABLED))
+                    disabled = true;
+            }
+            e_cal_component_free_categories_list(categ_list);
+
             if ((uid != nullptr) &&
+                (!disabled) &&
                 (status != ICAL_STATUS_COMPLETED) &&
                 (status != ICAL_STATUS_CANCELLED))
             {
                 ECalComponentAlarmAction omit[] = { (ECalComponentAlarmAction)-1 }; // list of action types to omit, terminated with -1
                 Appointment appointment;
-
-                GSList * categ_list = nullptr;
-                e_cal_component_get_categories_list (component, &categ_list);
-                for (GSList * l=categ_list; !appointment.ubuntu_alarm && l!=nullptr; l=l->next)
-                    if (!g_strcmp0(static_cast<const char*>(l->data), TAG_ALARM))
-                        appointment.ubuntu_alarm = true;
-                e_cal_component_free_categories_list(categ_list);
 
                 ECalComponentText text;
                 text.value = nullptr;
@@ -507,6 +516,7 @@ private:
                 appointment.end = end_dt;
                 appointment.color = subtask->color;
                 appointment.uid = uid;
+                appointment.ubuntu_alarm = ubuntu_alarm;
 
                 icalcomponent * icc = e_cal_component_get_icalcomponent(component);
                 std::cerr << "====" << std::endl << icalcomponent_as_ical_string(icc);
