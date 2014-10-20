@@ -37,10 +37,10 @@ bool Alarm::operator==(const Alarm& that) const
 
 bool Appointment::operator==(const Appointment& that) const
 {
-    return (color==that.color)
-        && (summary==that.summary)
+    return (type==that.type)
         && (uid==that.uid)
-        && (type==that.type)
+        && (color==that.color)
+        && (summary==that.summary)
         && (begin==that.begin)
         && (end==that.end)
         && (alarms==that.alarms);
