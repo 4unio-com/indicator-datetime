@@ -136,12 +136,10 @@ void LiveActions::phone_open_alarm_app()
 
 void LiveActions::phone_open_appointment(const Appointment& appt)
 {
-    if (appt.type == Appointment::TODO)
+    if (appt.ubuntu_alarm)
         phone_open_alarm_app();
-    else if (appt.type == Appointment::EVENT)
-        phone_open_calendar_app(DateTime::NowLocal());
     else
-        g_warn_if_reached();
+        phone_open_calendar_app(DateTime::NowLocal());
 }
 
 void LiveActions::phone_open_calendar_app(const DateTime&)

@@ -37,7 +37,7 @@ bool Alarm::operator==(const Alarm& that) const
 
 bool Appointment::operator==(const Appointment& that) const
 {
-    return (type==that.type)
+    return (ubuntu_alarm==that.ubuntu_alarm)
         && (uid==that.uid)
         && (color==that.color)
         && (summary==that.summary)

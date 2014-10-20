@@ -75,8 +75,8 @@ protected:
                                                     -g_date_time_get_seconds(tomorrow));
         auto tomorrow_end = g_date_time_add_full (tomorrow_begin, 0, 0, 1, 0, 0, -1);
 
-        Appointment a1; // a TODO alarm
-        a1.type = Appointment::TODO;
+        Appointment a1; // an ubuntu alarm
+        a1.ubuntu_alarm = true;
         a1.color = "red";
         a1.summary = "Alarm";
         a1.summary = "http://www.example.com/";
@@ -88,8 +88,8 @@ protected:
         auto ubermorgen_begin = g_date_time_add_days (tomorrow, 1);
         auto ubermorgen_end = g_date_time_add_full (tomorrow_begin, 0, 0, 1, 0, 0, -1);
 
-        Appointment a2; // a non-alarm appointment
-        a1.type = Appointment::EVENT;
+        Appointment a2; // something else
+        a2.ubuntu_alarm = false;
         a2.color = "green";
         a2.summary = "Other Text";
         a2.summary = "http://www.monkey.com/";

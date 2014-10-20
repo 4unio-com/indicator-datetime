@@ -33,6 +33,8 @@ namespace unity {
 namespace indicator {
 namespace datetime {
 
+static constexpr char const * TAG_ALARM {"x-canonical-alarm"};
+
 /****
 *****
 ****/
@@ -488,10 +490,12 @@ private:
                 ECalComponentAlarmAction omit[] = { (ECalComponentAlarmAction)-1 }; // list of action types to omit, terminated with -1
                 Appointment appointment;
 
-                if (vtype == E_CAL_COMPONENT_EVENT)
-                    appointment.type = Appointment::EVENT;
-                else
-                    appointment.type = Appointment::TODO;
+                GSList * categ_list = nullptr;
+                e_cal_component_get_categories_list (component, &categ_list);
+                for (GSList * l=categ_list; !appointment.ubuntu_alarm && l!=nullptr; l=l->next)
+                    if (!g_strcmp0(static_cast<const char*>(l->data), TAG_ALARM))
+                        appointment.ubuntu_alarm = true;
+                e_cal_component_free_categories_list(categ_list);
 
                 ECalComponentText text;
                 text.value = nullptr;
@@ -551,10 +555,9 @@ private:
 
                     e_cal_component_alarms_free(e_alarms);
                 }
-                // hm, no trigger... could it be an alarm from clock-app?
-                // alarms from clock-app are TODOs whose description matches
-                // their valarm's decription
-                else if (vtype == E_CAL_COMPONENT_TODO)
+                // hm, no trigger. if this came from ubuntu-clock-app,
+                // manually add a single trigger for the todo event's time
+                else if (appointment.ubuntu_alarm)
                 {
                     Alarm tmp;
                     tmp.time = appointment.begin;
@@ -573,21 +576,9 @@ private:
                             e_cal_component_alarm_free(a);
                         }
                     }
+                    cal_obj_uid_list_free(auids);
 
-                    GSList * text_list = nullptr;
-                    e_cal_component_get_description_list(component, &text_list);
-                    if (text_list != NULL)
-                    {
-                        auto description = static_cast<ECalComponentText*>(text_list->data);
-                        if (description && description->value && (tmp.audio_url == description->value))
-                        {
-                            // Yep it's a clock-app alarm w/o a trigger.
-                            // Manually add a single trigger for the todo event's time
-                            alarms[tmp.time] = tmp;
-                        }
-
-                        e_cal_component_free_text_list (text_list);
-                    }
+                    alarms[tmp.time] = tmp;
                 }
 
                 appointment.alarms.reserve(alarms.size());

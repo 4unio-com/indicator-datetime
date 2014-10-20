@@ -509,16 +509,16 @@ protected:
     GVariant* create_header_state()
     {
         // show the alarm icon iff there are VTODO alarms pending
-        bool has_todo_alarms = false;
+        bool has_ubuntu_alarms = false;
         for(const auto& appointment : m_upcoming)
-            if((has_todo_alarms = (appointment.type==Appointment::TODO) && !appointment.alarms.empty()))
+            if((has_ubuntu_alarms = appointment.ubuntu_alarm))
                 break;
 
         GVariantBuilder b;
         g_variant_builder_init(&b, G_VARIANT_TYPE_VARDICT);
         g_variant_builder_add(&b, "{sv}", "title", g_variant_new_string (_("Time & Date")));
         g_variant_builder_add(&b, "{sv}", "visible", g_variant_new_boolean (TRUE));
-        if (has_todo_alarms)
+        if (has_ubuntu_alarms)
         {
             auto label = m_formatter->header.get();
             auto a11y = g_strdup_printf(_("%s (has alarms)"), label.c_str());

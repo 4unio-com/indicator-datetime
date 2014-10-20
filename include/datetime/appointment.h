@@ -48,8 +48,9 @@ struct Alarm
 struct Appointment
 {
 public:
-    enum Type { EVENT, TODO };
-    Type type = EVENT;
+    //enum Type { EVENT, TODO };
+    //Type type = EVENT;
+    bool ubuntu_alarm = false;
 
     std::string uid;
     std::string color; 

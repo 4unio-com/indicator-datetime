@@ -312,11 +312,11 @@ TEST_F(LiveActionsFixture, PhoneOpenAppointment)
 
     a.uid = "some-uid";
     a.begin = DateTime::NowLocal();
-    a.type = Appointment::EVENT;
+    a.ubuntu_alarm = false;
     m_actions->phone_open_appointment(a);
     EXPECT_EQ(calendar_app_url, m_live_actions->last_url);
 
-    a.type = Appointment::TODO;
+    a.ubuntu_alarm = true;
     a.alarms.push_back(Alarm{});
     m_actions->phone_open_appointment(a);
     EXPECT_EQ(clock_app_url, m_live_actions->last_url);
