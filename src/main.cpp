@@ -139,7 +139,11 @@ main(int /*argc*/, char** /*argv*/)
     auto alarm_queue = create_simple_alarm_queue(state->clock, snooze_planner, engine, timezone_);
     auto on_snooze = [snooze_planner](const Appointment& a) {snooze_planner->add(a);};
     auto on_ok = [](const Appointment&){};
-    auto on_alarm_reached = [&snap, &on_snooze, &on_ok](const Appointment& a, const Alarm& alarm) {(*snap)(a, alarm, on_snooze, on_ok);};
+    auto on_alarm_reached = [&engine, &snap, &on_snooze, &on_ok](const Appointment& a, const Alarm& alarm) {
+        (*snap)(a, alarm, on_snooze, on_ok);
+        if (a.ubuntu_alarm)
+            engine->disable_alarm(a.uid);
+    };
     alarm_queue->alarm_reached().connect(on_alarm_reached);
 
     // create the menus

@@ -136,6 +136,19 @@ public:
         }
     }
 
+    void disable_alarm(const std::string& uid)
+    {
+        for (auto& kv : m_clients)
+        {
+            e_cal_client_get_object(kv.second,
+                                    uid.c_str(),
+                                    nullptr,
+                                    m_cancellable,
+                                    on_object_ready_for_disable,
+                                    this);
+        }
+    }
+
 private:
 
     void set_dirty_now()
@@ -378,8 +391,6 @@ private:
         static_cast<Impl*>(gself)->set_dirty_soon();
     }
 
-private:
-
     typedef std::function<void(const std::vector<Appointment>&)> appointment_func;
 
     struct Task
@@ -520,6 +531,7 @@ private:
 
                 icalcomponent * icc = e_cal_component_get_icalcomponent(component);
                 std::cerr << "====" << std::endl << icalcomponent_as_ical_string(icc);
+                std::cerr << "====" << std::endl << "recurrenceid: " << e_cal_component_get_recurid_as_string(component);
 
                 auto e_alarms = e_cal_util_generate_alarms_for_comp(component,
                                                                     subtask->begin,
@@ -601,7 +613,57 @@ private:
  
         return G_SOURCE_CONTINUE;
     }
- 
+
+
+    static void on_object_ready_for_disable(GObject      * client,
+                                            GAsyncResult * result,
+                                            gpointer       gself)
+    {
+        icalcomponent * icc = nullptr;
+        if (e_cal_client_get_object_finish (E_CAL_CLIENT(client), result, &icc, nullptr))
+        {
+            struct icaltimetype itt = icalcomponent_get_recurrenceid(icc);
+            if (icaltime_is_null_time(itt))
+            {
+                g_message("appears to be a one-time alarm");
+
+                auto ecc = e_cal_component_new_from_icalcomponent (icc);
+                if (ecc != nullptr)
+                {
+                    // add TAG_DISABLED to the list of categories
+                    GSList * old_categories = nullptr;
+                    e_cal_component_get_categories_list(ecc, &old_categories);
+                    auto new_categories = g_slist_copy(old_categories);
+                    new_categories = g_slist_append(new_categories, const_cast<char*>(TAG_DISABLED));
+                    e_cal_component_set_categories_list(ecc, new_categories);
+                    g_slist_free(new_categories);
+                    e_cal_component_free_categories_list(old_categories);
+
+                    e_cal_client_modify_object (E_CAL_CLIENT(client),
+                                                e_cal_component_get_icalcomponent(ecc),
+                                                E_CAL_OBJ_MOD_THIS,
+                                                static_cast<Impl*>(gself)->m_cancellable,
+                                                on_disable_done,
+                                                nullptr);
+
+                    g_clear_object(&ecc);
+                }
+            }
+        }
+    }
+
+    static void on_disable_done (GObject* gclient, GAsyncResult *res, gpointer)
+    {
+        GError * error = nullptr;
+        if (!e_cal_client_modify_object_finish (E_CAL_CLIENT(gclient), res, &error))
+        {
+            if (!g_error_matches(error, G_IO_ERROR, G_IO_ERROR_CANCELLED))
+                g_warning("indicator-datetime cannot mark one-time alarm as disabled: %s", error->message);
+
+            g_error_free(error);
+        }
+    }
+
     core::Signal<> m_changed;
     std::set<ESource*> m_sources;
     std::map<ESource*,ECalClient*> m_clients;
@@ -634,6 +696,11 @@ void EdsEngine::get_appointments(const DateTime& begin,
                                  std::function<void(const std::vector<Appointment>&)> func)
 {
     p->get_appointments(begin, end, tz, func);
+}
+
+void EdsEngine::disable_alarm(const std::string& uid)
+{
+    p->disable_alarm(uid);
 }
 
 /***
