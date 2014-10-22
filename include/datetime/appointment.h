@@ -21,10 +21,11 @@
 #define INDICATOR_DATETIME_APPOINTMENT_H
 
 #include <datetime/date-time.h>
-#include <string>
+
 #include <chrono>
 #include <utility>
 #include <vector>
+#include <string>
 
 namespace unity {
 namespace indicator {

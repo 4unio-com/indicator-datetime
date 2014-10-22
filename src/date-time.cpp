@@ -19,6 +19,8 @@
 
 #include <datetime/date-time.h>
 
+#include <chrono>
+
 namespace unity {
 namespace indicator {
 namespace datetime {
@@ -41,6 +43,18 @@ DateTime& DateTime::operator=(GDateTime* gdt)
 DateTime& DateTime::operator=(const DateTime& that)
 {
     m_dt = that.m_dt;
+    return *this;
+}
+
+DateTime& DateTime::operator+=(const std::chrono::minutes& minutes)
+{
+    add_full(0, 0, 0, 0, minutes.count(), 0);
+    return *this;
+}
+
+DateTime& DateTime::operator+=(const std::chrono::seconds& seconds)
+{
+    add_full(0, 0, 0, 0, 0, seconds.count());
     return *this;
 }
 

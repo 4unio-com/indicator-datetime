@@ -22,6 +22,7 @@
 
 #include <glib.h> // GDateTime
 
+#include <chrono>
 #include <ctime> // time_t
 #include <memory> // std::shared_ptr
 
@@ -42,6 +43,8 @@ public:
     explicit DateTime(GDateTime* in=nullptr);
     DateTime& operator=(GDateTime* in);
     DateTime& operator=(const DateTime& in);
+    DateTime& operator+=(const std::chrono::minutes&);
+    DateTime& operator+=(const std::chrono::seconds&);
     DateTime to_timezone(const std::string& zone) const;
     DateTime add_full(int years, int months, int days, int hours, int minutes, double seconds) const;
     void reset(GDateTime* in=nullptr);
