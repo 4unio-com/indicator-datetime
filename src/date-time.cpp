@@ -48,13 +48,13 @@ DateTime& DateTime::operator=(const DateTime& that)
 
 DateTime& DateTime::operator+=(const std::chrono::minutes& minutes)
 {
-    add_full(0, 0, 0, 0, minutes.count(), 0);
+    *this = add_full(0, 0, 0, 0, minutes.count(), 0);
     return *this;
 }
 
 DateTime& DateTime::operator+=(const std::chrono::seconds& seconds)
 {
-    add_full(0, 0, 0, 0, 0, seconds.count());
+    *this = add_full(0, 0, 0, 0, 0, seconds.count());
     return *this;
 }
 
