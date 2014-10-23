@@ -138,7 +138,7 @@ public:
 
     void disable_ubuntu_alarm(const Appointment& appointment)
     {
-        g_return_if_fail(!appointment.is_ubuntu_alarm());
+        g_return_if_fail(appointment.is_ubuntu_alarm());
 
         for (auto& kv : m_clients)
         {
