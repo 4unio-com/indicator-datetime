@@ -147,10 +147,10 @@ main(int /*argc*/, char** /*argv*/)
     auto on_ok = [](const Appointment&, const Alarm&){};
     auto on_alarm_reached = [&engine, &snap, &on_snooze, &on_calendar, &on_ok](const Appointment& appointment, const Alarm& alarm) {
         if (appointment.is_ubuntu_alarm()) {
-            (*snap)(appointment, alarm, _("Snooze"), on_snooze, _("OK"), on_ok);
+            (*snap)(appointment, alarm,  _("OK"), on_ok, _("Snooze"), on_snooze);
             engine->disable_ubuntu_alarm(appointment);
         } else {
-            (*snap)(appointment, alarm, _("Calendar"), on_calendar, _("OK"), on_ok);
+            (*snap)(appointment, alarm, _("OK"), on_ok, _("Calendar"), on_calendar);
         }
     };
     alarm_queue->alarm_reached().connect(on_alarm_reached);
