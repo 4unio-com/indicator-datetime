@@ -43,10 +43,16 @@ public:
     virtual ~Snap();
 
     typedef std::function<void(const Appointment&, const Alarm&)> alarm_func;
-    void operator()(const Appointment& appointment,
-                    const Alarm& alarm,
-                    const std::string& text_1, alarm_func action_1,
-                    const std::string& text_2, alarm_func action_2);
+
+    void show_alarm(const Appointment & appointment,
+                    const Alarm       & alarm,
+                    alarm_func          affirmative_func,
+                    alarm_func          action_func);
+
+    void show_event(const Appointment & appointment,
+                    const Alarm       & alarm,
+                    alarm_func          affirmative_func,
+                    alarm_func          action_func);
 
 private:
     class Impl;

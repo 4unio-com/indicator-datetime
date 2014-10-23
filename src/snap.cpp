@@ -61,8 +61,9 @@ public:
 
     void operator()(const Appointment& appointment,
                     const Alarm& alarm,
-                    const std::string& text_1, alarm_func action_1,
-                    const std::string& text_2, alarm_func action_2)
+                    const char* icon_name,
+                    const char* affirmative_text, alarm_func affirmative_func,
+                    const char* action_text,      alarm_func action_func)
     {
         // force the system to stay awake
         auto awake = std::make_shared<uin::Awake>(m_engine->app_name());
@@ -83,7 +84,7 @@ public:
         const bool interactive = m_engine->supports_actions();
         uin::Builder b;
         b.set_body (alarm.text);
-        b.set_icon_name ("alarm-clock");
+        b.set_icon_name (icon_name);
         b.add_hint (uin::Builder::HINT_SNAP);
         b.add_hint (uin::Builder::HINT_AFFIRMATIVE_HINT);
         b.add_hint (uin::Builder::HINT_NONSHAPED_ICON);
@@ -110,19 +111,19 @@ public:
         }
 
         if (interactive) {
-            b.add_action ("action-1", text_1);
-            b.add_action ("action-2", text_2);
+            b.add_action ("affirmative", affirmative_text);
+            b.add_action ("action", action_text);
         }
 
         // add 'sound', 'haptic', and 'awake' objects to the capture so
         // they stay alive until the closed callback is called; i.e.,
         // for the lifespan of the notficiation
-        b.set_closed_callback([appointment, alarm, action_1, action_2, sound, awake, haptic]
+        b.set_closed_callback([appointment, alarm, affirmative_func, action_func, sound, awake, haptic]
                               (const std::string& action){
-            if (action == "action-1")
-                action_1(appointment, alarm);
+            if (action == "affirmative")
+                affirmative_func(appointment, alarm);
             else
-                action_2(appointment, alarm);
+                action_func(appointment, alarm);
         });
 
         const auto key = m_engine->show(b);
@@ -185,15 +186,29 @@ Snap::~Snap()
 }
 
 void
-Snap::operator()(const Appointment& appointment,
-                 const Alarm& alarm,
-                 const std::string& text_1, alarm_func action_1,
-                 const std::string& text_2, alarm_func action_2)
+Snap::show_alarm(const Appointment & appointment,
+                 const Alarm       & alarm,
+                 alarm_func          affirmative_func,
+                 alarm_func          action_func)
 {
-    (*impl)(appointment,
-            alarm,
-            text_1, action_1,
-            text_2, action_2);
+    (*impl)(appointment, alarm, "alarm-clock",
+            _("OK"), affirmative_func,
+            _("Snooze"), action_func);
+}
+
+void
+Snap::show_event(const Appointment & appointment,
+                 const Alarm       & alarm,
+                 alarm_func          affirmative_func,
+                 alarm_func          action_func)
+{
+    const char* icon_name = DateTime::is_same_day(appointment.begin, alarm.time)
+                          ? "calendar-day"
+                          : "calendar";
+
+    (*impl)(appointment, alarm, icon_name,
+            _("OK"), affirmative_func,
+            _("Calendar"), action_func);
 }
 
 /***

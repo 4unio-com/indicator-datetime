@@ -144,13 +144,13 @@ main(int /*argc*/, char** /*argv*/)
         // never reached from the desktop profile...
         actions->phone_open_appointment(appointment);
     };
-    auto on_ok = [](const Appointment&, const Alarm&){};
-    auto on_alarm_reached = [&engine, &snap, &on_snooze, &on_calendar, &on_ok](const Appointment& appointment, const Alarm& alarm) {
+    auto on_affirmative = [](const Appointment&, const Alarm&){};
+    auto on_alarm_reached = [&engine, &snap, &on_snooze, &on_calendar, &on_affirmative](const Appointment& appointment, const Alarm& alarm) {
         if (appointment.is_ubuntu_alarm()) {
-            (*snap)(appointment, alarm,  _("OK"), on_ok, _("Snooze"), on_snooze);
+            snap->show_alarm(appointment, alarm, on_affirmative, on_snooze);
             engine->disable_ubuntu_alarm(appointment);
         } else {
-            (*snap)(appointment, alarm, _("OK"), on_ok, _("Calendar"), on_calendar);
+            snap->show_event(appointment, alarm, on_affirmative, on_calendar);
         }
     };
     alarm_queue->alarm_reached().connect(on_alarm_reached);

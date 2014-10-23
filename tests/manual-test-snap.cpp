@@ -100,7 +100,7 @@ int main(int argc, const char* argv[])
 
     auto notification_engine = std::make_shared<uin::Engine>("indicator-datetime-service");
     Snap snap (notification_engine, settings);
-    snap(a, a.alarms.front(), "Snooze", on_snooze, "OK", on_ok);
+    snap.show_alarm(a, a.alarms.front(), on_ok, on_snooze);
     g_main_loop_run(loop);
 
     g_main_loop_unref(loop);
