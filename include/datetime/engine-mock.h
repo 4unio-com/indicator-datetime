@@ -48,7 +48,7 @@ public:
         appointment_func(m_appointments);
     }
 
-    void disable_alarm(const std::string& /*uid*/) {
+    void disable_ubuntu_alarm(const Appointment& /*appointment*/) {
     }
 
     core::Signal<>& changed() {

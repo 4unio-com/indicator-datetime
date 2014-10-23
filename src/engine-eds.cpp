@@ -136,12 +136,14 @@ public:
         }
     }
 
-    void disable_alarm(const std::string& uid)
+    void disable_ubuntu_alarm(const Appointment& appointment)
     {
+        g_return_if_fail(!appointment.is_ubuntu_alarm());
+
         for (auto& kv : m_clients)
         {
             e_cal_client_get_object(kv.second,
-                                    uid.c_str(),
+                                    appointment.uid.c_str(),
                                     nullptr,
                                     m_cancellable,
                                     on_object_ready_for_disable,
@@ -497,13 +499,13 @@ private:
 
             // look for the in-house tags
             bool disabled = false;
-            bool ubuntu_alarm = false;
+            Appointment::Type type = Appointment::EVENT;
             GSList * categ_list = nullptr;
             e_cal_component_get_categories_list (component, &categ_list);
             for (GSList * l=categ_list; l!=nullptr; l=l->next) {
                 auto tag = static_cast<const char*>(l->data);
                 if (!g_strcmp0(tag, TAG_ALARM))
-                    ubuntu_alarm = true;
+                    type = Appointment::UBUNTU_ALARM;
                 if (!g_strcmp0(tag, TAG_DISABLED))
                     disabled = true;
             }
@@ -527,11 +529,10 @@ private:
                 appointment.end = end_dt;
                 appointment.color = subtask->color;
                 appointment.uid = uid;
-                appointment.ubuntu_alarm = ubuntu_alarm;
+                appointment.type = type;
 
                 icalcomponent * icc = e_cal_component_get_icalcomponent(component);
                 std::cerr << "====" << std::endl << icalcomponent_as_ical_string(icc);
-                std::cerr << "====" << std::endl << "recurrenceid: " << e_cal_component_get_recurid_as_string(component);
 
                 auto e_alarms = e_cal_util_generate_alarms_for_comp(component,
                                                                     subtask->begin,
@@ -579,7 +580,7 @@ private:
                 }
                 // hm, no trigger. if this came from ubuntu-clock-app,
                 // manually add a single trigger for the todo event's time
-                else if (appointment.ubuntu_alarm)
+                else if (appointment.is_ubuntu_alarm())
                 {
                     Alarm tmp;
                     tmp.time = appointment.begin;
@@ -698,9 +699,9 @@ void EdsEngine::get_appointments(const DateTime& begin,
     p->get_appointments(begin, end, tz, func);
 }
 
-void EdsEngine::disable_alarm(const std::string& uid)
+void EdsEngine::disable_ubuntu_alarm(const Appointment& appointment)
 {
-    p->disable_alarm(uid);
+    p->disable_ubuntu_alarm(appointment);
 }
 
 /***

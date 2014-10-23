@@ -53,7 +53,7 @@ public:
                           const Timezone& default_timezone,
                           std::function<void(const std::vector<Appointment>&)> appointment_func);
 
-    void disable_alarm(const std::string& uid);
+    void disable_ubuntu_alarm(const Appointment&);
 
     core::Signal<>& changed();
 

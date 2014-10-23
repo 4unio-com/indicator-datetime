@@ -137,12 +137,21 @@ main(int /*argc*/, char** /*argv*/)
     auto notification_engine = std::make_shared<uin::Engine>("indicator-datetime-service");
     std::unique_ptr<Snap> snap (new Snap(notification_engine, state->settings));
     auto alarm_queue = create_simple_alarm_queue(state->clock, snooze_planner, engine, timezone_);
-    auto on_snooze = [snooze_planner](const Appointment& a) {snooze_planner->add(a);};
-    auto on_ok = [](const Appointment&){};
-    auto on_alarm_reached = [&engine, &snap, &on_snooze, &on_ok](const Appointment& a, const Alarm& alarm) {
-        (*snap)(a, alarm, on_snooze, on_ok);
-        if (a.ubuntu_alarm)
-            engine->disable_alarm(a.uid);
+    auto on_snooze = [snooze_planner](const Appointment& appointment, const Alarm& alarm) {
+        snooze_planner->add(appointment, alarm);
+    };
+    auto on_calendar = [actions](const Appointment& appointment, const Alarm&) {
+        // never reached from the desktop profile...
+        actions->phone_open_appointment(appointment);
+    };
+    auto on_ok = [](const Appointment&, const Alarm&){};
+    auto on_alarm_reached = [&engine, &snap, &on_snooze, &on_calendar, &on_ok](const Appointment& appointment, const Alarm& alarm) {
+        if (appointment.is_ubuntu_alarm()) {
+            (*snap)(appointment, alarm, _("Snooze"), on_snooze, _("OK"), on_ok);
+            engine->disable_ubuntu_alarm(appointment);
+        } else {
+            (*snap)(appointment, alarm, _("Calendar"), on_calendar, _("OK"), on_ok);
+        }
     };
     alarm_queue->alarm_reached().connect(on_alarm_reached);
 
