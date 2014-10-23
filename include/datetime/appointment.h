@@ -23,14 +23,17 @@
 #include <datetime/date-time.h>
 
 #include <chrono>
+#include <string>
 #include <utility>
 #include <vector>
-#include <string>
 
 namespace unity {
 namespace indicator {
 namespace datetime {
 
+/**
+ * \brief Basic information required to raise a notification about some Appointment.
+ */
 struct Alarm
 {
     std::string text;
@@ -41,17 +44,12 @@ struct Alarm
     bool operator== (const Alarm& that) const;
 };
 
-/**
- * \brief Plain Old Data Structure that represents a calendar appointment.
- *
- * @see Planner
- */
 struct Appointment
 {
 public:
-    //enum Type { EVENT, TODO };
-    //Type type = EVENT;
-    bool ubuntu_alarm = false;
+    enum Type { EVENT, UBUNTU_ALARM };
+    Type type = EVENT;
+    bool is_ubuntu_alarm() const { return type == UBUNTU_ALARM; }
 
     std::string uid;
     std::string color; 

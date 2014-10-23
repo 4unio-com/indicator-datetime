@@ -39,7 +39,7 @@ public:
     SnoozePlanner(const std::shared_ptr<Settings>&,
                   const std::shared_ptr<Clock>&);
     ~SnoozePlanner();
-    void add(const Appointment&);
+    void add(const Appointment&, const Alarm&);
 
     core::Property<std::vector<Appointment>>& appointments() override;
 

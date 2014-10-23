@@ -209,10 +209,10 @@ private:
         //  confirm it has the right x-canonical-type
         gchar * str = nullptr;
         g_menu_model_get_item_attribute(section, index, "x-canonical-type", "s", &str);
-        if (appt.alarms.empty())
-            EXPECT_STREQ("com.canonical.indicator.appointment", str);
-        else
+        if (appt.is_ubuntu_alarm())
             EXPECT_STREQ("com.canonical.indicator.alarm", str);
+        else
+            EXPECT_STREQ("com.canonical.indicator.appointment", str);
         g_clear_pointer(&str, g_free);
 
         // confirm it has a nonempty x-canonical-time-format
@@ -242,7 +242,7 @@ private:
         g_clear_pointer(&str, g_free);
 
         // confirm that alarms have an icon
-        if (!appt.alarms.empty())
+        if (appt.is_ubuntu_alarm())
         {
             auto v = g_menu_model_get_item_attribute_value(section,
                                                            index,

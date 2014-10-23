@@ -61,8 +61,8 @@ public:
 
     void operator()(const Appointment& appointment,
                     const Alarm& alarm,
-                    appointment_func snooze,
-                    appointment_func ok)
+                    const std::string& text_1, alarm_func action_1,
+                    const std::string& text_2, alarm_func action_2)
     {
         // force the system to stay awake
         auto awake = std::make_shared<uin::Awake>(m_engine->app_name());
@@ -110,19 +110,19 @@ public:
         }
 
         if (interactive) {
-            b.add_action ("ok", _("OK"));
-            b.add_action ("snooze", _("Snooze"));
+            b.add_action ("action-1", text_1);
+            b.add_action ("action-2", text_2);
         }
 
         // add 'sound', 'haptic', and 'awake' objects to the capture so
         // they stay alive until the closed callback is called; i.e.,
         // for the lifespan of the notficiation
-        b.set_closed_callback([appointment, snooze, ok, sound, awake, haptic]
+        b.set_closed_callback([appointment, alarm, action_1, action_2, sound, awake, haptic]
                               (const std::string& action){
-            if (action == "snooze")
-                snooze(appointment);
+            if (action == "action-1")
+                action_1(appointment, alarm);
             else
-                ok(appointment);
+                action_2(appointment, alarm);
         });
 
         const auto key = m_engine->show(b);
@@ -187,10 +187,13 @@ Snap::~Snap()
 void
 Snap::operator()(const Appointment& appointment,
                  const Alarm& alarm,
-                 appointment_func show,
-                 appointment_func ok)
+                 const std::string& text_1, alarm_func action_1,
+                 const std::string& text_2, alarm_func action_2)
 {
-  (*impl)(appointment, alarm, show, ok);
+    (*impl)(appointment,
+            alarm,
+            text_1, action_1,
+            text_2, action_2);
 }
 
 /***

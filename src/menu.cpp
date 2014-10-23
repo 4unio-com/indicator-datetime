@@ -316,7 +316,7 @@ private:
             g_menu_item_set_attribute (menu_item, "x-canonical-time", "x", unix_time);
             g_menu_item_set_attribute (menu_item, "x-canonical-time-format", "s", fmt.c_str());
 
-            if (!appt.alarms.empty())
+            if (appt.is_ubuntu_alarm())
             {
                 g_menu_item_set_attribute (menu_item, "x-canonical-type", "s", "com.canonical.indicator.alarm");
                 g_menu_item_set_attribute_value(menu_item, G_MENU_ATTRIBUTE_ICON, get_serialized_alarm_icon());
@@ -511,7 +511,7 @@ protected:
         // show the alarm icon iff there are VTODO alarms pending
         bool has_ubuntu_alarms = false;
         for(const auto& appointment : m_upcoming)
-            if((has_ubuntu_alarms = appointment.ubuntu_alarm))
+            if((has_ubuntu_alarms = appointment.is_ubuntu_alarm()))
                 break;
 
         GVariantBuilder b;

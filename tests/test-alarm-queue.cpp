@@ -76,11 +76,11 @@ protected:
         auto tomorrow_end = g_date_time_add_full (tomorrow_begin, 0, 0, 1, 0, 0, -1);
 
         Appointment a1; // an ubuntu alarm
-        a1.ubuntu_alarm = true;
         a1.color = "red";
         a1.summary = "Alarm";
         a1.summary = "http://www.example.com/";
         a1.uid = "example";
+        a1.type = Appointment::UBUNTU_ALARM;
         a1.begin = tomorrow_begin;
         a1.end = tomorrow_end;
         a1.alarms.push_back(Alarm{"Alarm Text", "", a1.begin, std::chrono::seconds::zero()});
@@ -89,11 +89,11 @@ protected:
         auto ubermorgen_end = g_date_time_add_full (tomorrow_begin, 0, 0, 1, 0, 0, -1);
 
         Appointment a2; // something else
-        a2.ubuntu_alarm = false;
         a2.color = "green";
         a2.summary = "Other Text";
         a2.summary = "http://www.monkey.com/";
         a2.uid = "monkey";
+        a2.type = Appointment::EVENT;
         a2.begin = ubermorgen_begin;
         a2.end = ubermorgen_end;
         a2.alarms.push_back(Alarm{"Alarm Text", "", a2.begin, std::chrono::seconds::zero()});

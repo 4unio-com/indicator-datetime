@@ -134,12 +134,17 @@ void LiveActions::phone_open_alarm_app()
     dispatch_url("appid://com.ubuntu.clock/clock/current-user-version");
 }
 
-void LiveActions::phone_open_appointment(const Appointment& appt)
+void LiveActions::phone_open_appointment(const Appointment& appointment)
 {
-    if (appt.ubuntu_alarm)
-        phone_open_alarm_app();
-    else
-        phone_open_calendar_app(DateTime::NowLocal());
+    switch (appointment.type)
+    {
+        case Appointment::UBUNTU_ALARM:
+            phone_open_alarm_app();
+            break;
+
+        default:
+            phone_open_calendar_app(appointment.begin);
+    }
 }
 
 void LiveActions::phone_open_calendar_app(const DateTime&)

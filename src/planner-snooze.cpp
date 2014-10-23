@@ -51,16 +51,17 @@ public:
         return m_appointments;
     }
 
-    void add(const Appointment& appt_in)
+    void add(const Appointment& appt_in, const Alarm& alarm)
     {
         Appointment appt = appt_in;
+        appt.alarms.clear();
+        appt.alarms.push_back(alarm);
 
         // reschedule the alarm to go off N minutes from now
         const auto offset = std::chrono::minutes(m_settings->snooze_duration.get());
         appt.begin += offset;
         appt.end += offset;
-        for (auto& alarm : appt.alarms)
-            alarm.time += offset;
+        appt.alarms[0].time += offset;
 
         // give it a new ID
         gchar* uid = e_uid_new();
@@ -97,9 +98,9 @@ SnoozePlanner::~SnoozePlanner()
 }
 
 void
-SnoozePlanner::add(const Appointment& appointment)
+SnoozePlanner::add(const Appointment& appointment, const Alarm& alarm)
 {
-    impl->add(appointment);
+    impl->add(appointment, alarm);
 }
 
 core::Property<std::vector<Appointment>>&

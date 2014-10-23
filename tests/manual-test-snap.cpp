@@ -81,11 +81,11 @@ int main(int argc, const char* argv[])
     a.alarms.push_back(alarm);
 
     auto loop = g_main_loop_new(nullptr, false);
-    auto on_snooze = [loop](const Appointment& appt){
+    auto on_snooze = [loop](const Appointment& appt, const Alarm&){
         g_message("You clicked 'Snooze' for appt '%s'", appt.summary.c_str());
         g_idle_add(quit_idle, loop);
     };
-    auto on_ok = [loop](const Appointment&){
+    auto on_ok = [loop](const Appointment&, const Alarm&){
         g_message("You clicked 'OK'");
         g_idle_add(quit_idle, loop);
     };
@@ -100,7 +100,7 @@ int main(int argc, const char* argv[])
 
     auto notification_engine = std::make_shared<uin::Engine>("indicator-datetime-service");
     Snap snap (notification_engine, settings);
-    snap(a, a.alarms.front(), on_snooze, on_ok);
+    snap(a, a.alarms.front(), "Snooze", on_snooze, "OK", on_ok);
     g_main_loop_run(loop);
 
     g_main_loop_unref(loop);
