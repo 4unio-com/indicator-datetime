@@ -63,23 +63,17 @@ public:
                     appointment_func snooze,
                     appointment_func ok)
     {
-        /* Alarms and calendar events are treated differently.
-           Alarms should require manual intervention to dismiss.
-           Calendar events are less urgent and shouldn't require manual
-           intervention and shouldn't loop the sound. */
-        const bool interactive = appointment.is_ubuntu_alarm() && m_engine->supports_actions();
-
         // force the system to stay awake
         auto awake = std::make_shared<uin::Awake>(m_engine->app_name());
 
         // create the sound...
         const auto uri = get_alarm_uri(appointment, m_settings);
         const auto volume = m_settings->alarm_volume.get();
-        const bool loop = interactive;
+        const bool loop = appointment.is_ubuntu_alarm() && m_engine->supports_actions();
         auto sound = std::make_shared<uin::Sound>(uri, volume, loop);
 
         // create the haptic feedback...
-        const auto haptic_mode = m_settings->alarm_haptic.get();
+        const auto haptic_mode = appointment.is_ubuntu_alarm() ? m_settings->alarm_haptic.get() : "none";
         std::shared_ptr<uin::Haptic> haptic;
         if (haptic_mode == "pulse")
             haptic = std::make_shared<uin::Haptic>(uin::Haptic::MODE_PULSE);
@@ -106,7 +100,7 @@ public:
         b.set_title (title);
         g_free (title);
         b.set_timeout (std::chrono::duration_cast<std::chrono::seconds>(minutes));
-        if (interactive) {
+        if (m_engine->supports_actions()) {
             b.add_hint (uin::Builder::HINT_SNAP);
             b.add_hint (uin::Builder::HINT_AFFIRMATIVE_HINT);
             b.add_action ("ok", _("OK"));

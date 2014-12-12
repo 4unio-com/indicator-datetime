@@ -54,8 +54,7 @@ Test-case indicator-datetime/calendar-event-notification
 		<dd>The datetime indicator's event list should update itself to show this new event.</dd>
 		<dd>Calendar events do not get the alarm icon, so no alarm icon should be shown in the header unless there is also an upcoming alarm set.</dd>
 	<dt>Wait for the event's time to be reached</dt>
-		<dd>The datetime indicator should pop up a non-interactive notification that plays a nonlooping sound.</dd>
-		<dd>The notification should disappear after a moment without requiring user intervention.</dd>
+		<dd>A snap decision notification should appear; but unlike alarms, the sound should be nonrepeating and there should be no haptic feedback.</dd>
 </dl>
 
 Test-case indicator-datetime/alarm-timezone
