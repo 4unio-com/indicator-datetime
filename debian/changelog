@@ -1,3 +1,11 @@
+indicator-datetime (13.10.0+15.04.20150115~rtm-0ubuntu1) 14.09; urgency=low
+
+  [ Charles Kerr ]
+  * Fix bug that misidentified repeating alarms as one-time alarms,
+    causing them to be disabled after triggering. (LP: #1411171)
+
+ -- Ubuntu daily release <ps-jenkins@lists.canonical.com>  Thu, 15 Jan 2015 20:57:21 +0000
+
 indicator-datetime (13.10.0+15.04.20141210~rtm-0ubuntu1) 14.09; urgency=low
 
   [ Charles Kerr ]
