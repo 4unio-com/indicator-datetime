@@ -1,3 +1,10 @@
+indicator-datetime (13.10.0+15.04.20150226~rtm-0ubuntu1) 14.09; urgency=medium
+
+  [ Charles Kerr ]
+  * Avoid ECANCELED errors in calls to timerfd_settime() (LP: #1424966)
+
+ -- CI Train Bot <ci-train-bot@canonical.com>  Thu, 26 Feb 2015 05:29:29 +0000
+
 indicator-datetime (13.10.0+15.04.20150213~rtm-0ubuntu1) 14.09; urgency=medium
 
   [ Charles Kerr ]
