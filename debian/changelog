@@ -1,3 +1,10 @@
+indicator-datetime (13.10.0+15.04.20150318~rtm-0ubuntu1) 14.09; urgency=medium
+
+  [ Charles Kerr ]
+  * Work around glib's type initialization deadlock. (LP: #1425297)
+
+ -- CI Train Bot <ci-train-bot@canonical.com>  Wed, 18 Mar 2015 17:28:20 +0000
+
 indicator-datetime (13.10.0+15.04.20150226~rtm-0ubuntu1) 14.09; urgency=medium
 
   [ Charles Kerr ]
