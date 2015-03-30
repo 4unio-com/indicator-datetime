@@ -40,6 +40,7 @@ public:
     bool is_ubuntu_alarm() const { return type == UBUNTU_ALARM; }
 
     std::string color; 
+    std::string icon; 
     std::string summary;
     std::string url;
     std::string uid;

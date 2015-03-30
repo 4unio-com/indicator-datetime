@@ -37,6 +37,7 @@ static constexpr char const * TAG_ALARM    {"x-canonical-alarm"};
 static constexpr char const * TAG_DISABLED {"x-canonical-disabled"};
 
 static constexpr char const * X_PROP_ACTIVATION_URL {"X-CANONICAL-ACTIVATION-URL"};
+static constexpr char const * X_PROP_ICON           {"X-CANONICAL-ICON"};
 
 /****
 *****
@@ -478,11 +479,20 @@ private:
                     while (icalprop)
                     {
                         const char * x_name = icalproperty_get_x_name(icalprop);
-                        if ((x_name != nullptr) && !g_ascii_strcasecmp(x_name, X_PROP_ACTIVATION_URL))
+                        if (x_name == nullptr)
                         {
-                            const char * url = icalproperty_get_value_as_string(icalprop);
-                            if ((url != nullptr) && appointment.url.empty())
-                                appointment.url = url;
+                            if (!g_ascii_strcasecmp(x_name, X_PROP_ACTIVATION_URL))
+                            {
+                                const char * const s = icalproperty_get_value_as_string(icalprop);
+                                if ((s != nullptr) && appointment.url.empty())
+                                    appointment.url = s;
+                            }
+                            else if (!g_ascii_strcasecmp(x_name, X_PROP_ICON))
+                            {
+                                const char * const s = icalproperty_get_value_as_string(icalprop);
+                                if ((s != nullptr) && appointment.icon.empty())
+                                    appointment.icon = s;
+                            }
                         }
 
                         icalprop = icalcomponent_get_next_property(icc, ICAL_X_PROPERTY);

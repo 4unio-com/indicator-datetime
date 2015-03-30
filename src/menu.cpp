@@ -316,15 +316,28 @@ private:
             g_menu_item_set_attribute (menu_item, "x-canonical-time", "x", unix_time);
             g_menu_item_set_attribute (menu_item, "x-canonical-time-format", "s", fmt.c_str());
 
-            if (appt.is_ubuntu_alarm())
+            if (!appt.icon.empty())
             {
-                g_menu_item_set_attribute (menu_item, "x-canonical-type", "s", "com.canonical.indicator.alarm");
+                auto i = g_themed_icon_new_with_default_fallbacks(appt.icon.c_str());
+                auto v = g_icon_serialize(i);
+                if (v != nullptr)
+                {
+                    g_menu_item_set_attribute_value(menu_item, G_MENU_ATTRIBUTE_ICON, v);
+                    g_variant_unref(v);
+                }
+                g_object_unref(i);
+            }
+            // keep this for a release cycle as transitional support for
+            // older alarms that don't have the X-CANONICAL-ICON x-prop
+            else if (appt.is_ubuntu_alarm())
+            {
                 g_menu_item_set_attribute_value(menu_item, G_MENU_ATTRIBUTE_ICON, get_serialized_alarm_icon());
             }
+
+            if (appt.is_ubuntu_alarm())
+                g_menu_item_set_attribute (menu_item, "x-canonical-type", "s", "com.canonical.indicator.alarm");
             else
-            {
                 g_menu_item_set_attribute (menu_item, "x-canonical-type", "s", "com.canonical.indicator.appointment");
-            }
 
             if (!appt.color.empty())
                 g_menu_item_set_attribute (menu_item, "x-canonical-color", "s", appt.color.c_str());
