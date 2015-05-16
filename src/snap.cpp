@@ -136,6 +136,10 @@ public:
             b.add_action ("ok", _("OK"));
             b.add_action ("snooze", _("Snooze"));
         }
+        // Show calendar notification in notification area
+        else {
+            b.add_hint (uin::Builder::HINT_SNAP);
+        }
 
         // add 'sound', 'haptic', and 'awake' objects to the capture so
         // they stay alive until the closed callback is called; i.e.,
