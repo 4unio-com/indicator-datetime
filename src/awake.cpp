@@ -36,7 +36,7 @@ class Awake::Impl
 {
 public:
 
-    Impl(const std::string& app_name):
+    explicit Impl(const std::string& app_name):
         m_app_name(app_name),
         m_cancellable(g_cancellable_new())
     {

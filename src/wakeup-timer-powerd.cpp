@@ -38,7 +38,7 @@ class PowerdWakeupTimer::Impl
 {
 public:
 
-    Impl(const std::shared_ptr<Clock>& clock):
+    explicit Impl(const std::shared_ptr<Clock>& clock):
         m_clock(clock),
         m_cancellable(g_cancellable_new())
     {

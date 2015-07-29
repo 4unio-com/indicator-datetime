@@ -40,7 +40,7 @@ class Clock::Impl
 {
 public:
 
-    Impl(Clock& owner):
+    explicit Impl(Clock& owner):
         m_owner(owner),
         m_cancellable(g_cancellable_new())
     {

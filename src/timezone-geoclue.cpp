@@ -36,7 +36,7 @@ class GeoclueTimezone::Impl
 
 public:
 
-    Impl(GeoclueTimezone& owner):
+    explicit Impl(GeoclueTimezone& owner):
         m_owner(owner),
         m_cancellable(g_cancellable_new())
     {

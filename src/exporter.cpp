@@ -37,7 +37,7 @@ class Exporter::Impl
 {
 public:
 
-    Impl(const std::shared_ptr<Settings>& settings):
+    explicit Impl(const std::shared_ptr<Settings>& settings):
         m_settings(settings),
         m_alarm_props(datetime_alarm_properties_skeleton_new())
     {

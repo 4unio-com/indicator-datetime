@@ -74,7 +74,7 @@ class Timezone;
 class LiveClock: public Clock
 {
 public:
-    LiveClock (const std::shared_ptr<const Timezone>& zones);
+    explicit LiveClock(const std::shared_ptr<const Timezone>& zones);
     virtual ~LiveClock();
     virtual DateTime localtime() const override;
 

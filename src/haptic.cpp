@@ -37,7 +37,7 @@ class Haptic::Impl
 {
 public:
 
-    Impl(const Mode& mode):
+    explicit Impl(const Mode& mode):
         m_mode(mode),
         m_cancellable(g_cancellable_new())
     {

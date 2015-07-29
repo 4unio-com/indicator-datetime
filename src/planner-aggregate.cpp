@@ -30,7 +30,7 @@ namespace datetime {
 class AggregatePlanner::Impl
 {
 public:
-    Impl(AggregatePlanner* owner):
+    explicit Impl(AggregatePlanner* owner):
         m_owner(owner)
     {
     }

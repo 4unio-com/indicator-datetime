@@ -36,7 +36,7 @@ class MainloopWakeupTimer::Impl
 
 public:
 
-    Impl(const std::shared_ptr<Clock>& clock):
+    explicit Impl(const std::shared_ptr<Clock>& clock):
         m_clock(clock)
     {
     }
