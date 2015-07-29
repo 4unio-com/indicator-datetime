@@ -65,8 +65,8 @@ class TestDBusFixture: public GlibFixture
 
   protected:
 
-    GTestDBus * test_dbus;
-    GDBusConnection * system_bus;
+    GTestDBus * test_dbus = nullptr;
+    GDBusConnection * system_bus = nullptr;
     const std::vector<std::string> service_dirs;
 
     virtual void SetUp() override
