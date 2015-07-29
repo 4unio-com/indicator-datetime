@@ -44,5 +44,6 @@ TEST_F(GeoclueFixture, ChangeDetected)
   const std::string timezone_2 = "America/Chicago";
   setGeoclueTimezoneOnIdle(timezone_2);
   g_main_loop_run(loop);
+  EXPECT_TRUE(changed);
   EXPECT_EQ(timezone_2, tz.timezone.get());
 }
