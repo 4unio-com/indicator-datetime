@@ -46,7 +46,7 @@ std::string joinDateAndTimeFormatStrings(const char* date_string,
     {
         str = date_string;
     }
-    else // time_string
+    else if (time_string)
     {
         str = time_string;
     }
