@@ -40,6 +40,7 @@ add_test(cppcheck cppcheck
          --quiet
          --enable=all
          --error-exitcode=2
+         --suppress=pureVirtualCall
          -I${CMAKE_SOURCE_DIR}/include
          ${CMAKE_SOURCE_DIR}/src
          ${CMAKE_SOURCE_DIR}/tests)
