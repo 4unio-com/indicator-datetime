@@ -19,6 +19,7 @@ Build-Depends: cmake,
                libdbustest1-dev,
                dbus-test-runner,
                python3-dbusmock,
+               cppcheck,
 # for 12h/24h locale unit tests:
                locales,
                language-pack-touch-en | language-pack-en-base,

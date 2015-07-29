@@ -36,6 +36,13 @@ include_directories (${CMAKE_BINARY_DIR}/src)
 include_directories (${CMAKE_CURRENT_BINARY_DIR})
 include_directories (${DBUSTEST_INCLUDE_DIRS})
 
+add_test(cppcheck cppcheck
+         --quiet
+         --enable=all
+         --error-exitcode=2
+         -I${CMAKE_SOURCE_DIR}/include
+         ${CMAKE_SOURCE_DIR}/src
+         ${CMAKE_SOURCE_DIR}/tests)
 
 add_definitions (-DSANDBOX="${CMAKE_CURRENT_BINARY_DIR}")
 
