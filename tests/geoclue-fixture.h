@@ -146,7 +146,7 @@ public:
 
     void setGeoclueTimezoneOnIdle (const std::string& newZone)
     {
-        g_timeout_add (50, emit_address_changed_idle, new EmitAddressChangedData(mock, obj_geo_addr, newZone.c_str()));
+        g_timeout_add (50, emit_address_changed_idle, new EmitAddressChangedData(mock, obj_geo_addr, newZone));
     }
 
 };
