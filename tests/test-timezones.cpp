@@ -90,7 +90,6 @@ TEST_F(TimezonesFixture, ManagerTest)
   EXPECT_EQ(2, zones.size());
   EXPECT_EQ(1, zones.count(timezone_file));
   EXPECT_EQ(1, zones.count(timezone_geo));
-  zones_changed = false;
 
   // now tweak the geoclue value... the geoclue-detected timezone should change,
   // causing the 'timezones' property to change
