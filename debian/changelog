@@ -1,4 +1,4 @@
-indicator-datetime (13.10.0+15.10.20151007.1-0ubuntu1) vivid; urgency=medium
+indicator-datetime (15.04.0) vivid; urgency=medium
 
   * Manual version bump to resolve version number issue in landing
 
