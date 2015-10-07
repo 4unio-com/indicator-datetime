@@ -1,3 +1,9 @@
+indicator-datetime (15.04.0) vivid; urgency=medium
+
+  * Manual version bump to resolve version number issue in landing
+
+ -- Charles Kerr <charles.kerr@canonical.com>  Wed, 07 Oct 2015 10:20:52 -0500
+
 indicator-datetime (13.10.0+15.10.20150710.1-0ubuntu1) wily; urgency=medium
 
   * New rebuild forced.
