@@ -590,6 +590,7 @@ TEST_F(SnapFixture,Vibrate)
 ****
 ***/
 
+#if 0
 namespace uin = unity::indicator::notifications;
 
 /**
@@ -632,7 +633,6 @@ std::string path_to_uri(const std::string& path)
   return uri;
 }
 
-#if 0
 TEST_F(SnapFixture,DefaultSounds)
 {
   auto settings = std::make_shared<Settings>();
