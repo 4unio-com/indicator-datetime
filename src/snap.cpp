@@ -52,8 +52,10 @@ class Snap::Impl
 public:
 
     Impl(const std::shared_ptr<unity::indicator::notifications::Engine>& engine,
+         const std::shared_ptr<unity::indicator::notifications::SoundBuilder>& sound_builder,
          const std::shared_ptr<const Settings>& settings):
       m_engine(engine),
+      m_sound_builder(sound_builder),
       m_settings(settings),
       m_cancellable(g_cancellable_new())
     {
@@ -97,10 +99,11 @@ public:
         if (appointment.is_ubuntu_alarm() || !silent_mode()) {
             // create the sound.
             const auto role = appointment.is_ubuntu_alarm() ? "alarm" : "alert";
-            const auto uri = get_alarm_uri(alarm, m_settings);
+            const auto default_sound = appointment.is_ubuntu_alarm() ? ALARM_DEFAULT_SOUND : CALENDAR_DEFAULT_SOUND;
+            const auto uri = get_alarm_uri(alarm, m_settings, default_sound);
             const auto volume = m_settings->alarm_volume.get();
             const bool loop = interactive;
-            sound = std::make_shared<uin::Sound>(role, uri, volume, loop);
+            sound = m_sound_builder->create(role, uri, volume, loop);
         }
 
         // create the haptic feedback...
@@ -190,13 +193,12 @@ private:
     }
 
     std::string get_alarm_uri(const Alarm& alarm,
-                              const std::shared_ptr<const Settings>& settings) const
+                              const std::shared_ptr<const Settings>& settings,
+                              const std::string& default_sound ) const
     {
-        const char* FALLBACK {"/usr/share/sounds/ubuntu/ringtones/Alarm clock.ogg"};
-
         const std::string candidates[] = { alarm.audio_url,
                                            settings->alarm_sound.get(),
-                                           FALLBACK };
+                                           default_sound };
 
         std::string uri;
 
@@ -223,6 +225,7 @@ private:
     }
 
     const std::shared_ptr<unity::indicator::notifications::Engine> m_engine;
+    const std::shared_ptr<unity::indicator::notifications::SoundBuilder> m_sound_builder;
     const std::shared_ptr<const Settings> m_settings;
     std::set<int> m_notifications;
     GCancellable * m_cancellable {nullptr};
@@ -234,8 +237,9 @@ private:
 ***/
 
 Snap::Snap(const std::shared_ptr<unity::indicator::notifications::Engine>& engine,
+           const std::shared_ptr<unity::indicator::notifications::SoundBuilder>& sound_builder,
            const std::shared_ptr<const Settings>& settings):
-  impl(new Impl(engine, settings))
+  impl(new Impl(engine, sound_builder, settings))
 {
 }
 
