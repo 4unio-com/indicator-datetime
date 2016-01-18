@@ -20,6 +20,7 @@ Build-Depends: cmake,
                libgtest-dev,
                libdbustest1-dev,
                dbus-test-runner,
+               gsettings-ubuntu-schemas,
                python3-dbusmock,
 # for 12h/24h locale unit tests:
                locales,
@@ -41,6 +42,7 @@ Package: indicator-datetime
 Architecture: any
 Depends: ${shlibs:Depends}, 
          ${misc:Depends},
+         gsettings-ubuntu-schemas,
          systemd-services,
          systemd-shim,
 Recommends: indicator-applet | indicator-renderer,

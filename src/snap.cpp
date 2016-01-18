@@ -94,6 +94,12 @@ public:
         // force the system to stay awake
         auto awake = std::make_shared<uin::Awake>(m_engine->app_name());
 
+        // mute notifications of appointments according to system settings
+        // Note: alarms will still fire up normally below
+        if (! appointment.is_ubuntu_alarm() &&
+            notifications_disabled())
+          return;
+
         // calendar events are muted in silent mode; alarm clocks never are
         std::shared_ptr<uin::Sound> sound;
         if (appointment.is_ubuntu_alarm() || !silent_mode()) {
@@ -159,6 +165,36 @@ public:
     }
 
 private:
+
+    bool notifications_disabled() const
+    {
+        // check if calendar events are disabled in system notification settings
+        GSettings *cunh = g_settings_new("com.ubuntu.notifications.hub");
+        GVariant *blacklist = g_settings_get_value(cunh, "blacklist");
+
+        GVariantIter *iter;
+        g_variant_get(blacklist, "a(ss)", &iter);
+
+        gchar *pkg;
+        gchar *app;
+        bool result = false;
+
+        while(g_variant_iter_loop(iter, "(ss)", &pkg, &app)) {
+            if (g_strcmp0(pkg, "com.ubuntu.calendar")) {
+                result = true; // ie, don't show the appointments
+                g_free(pkg);
+                g_free(app);
+                break;
+            }
+        }
+
+        g_object_unref(cunh);
+        g_variant_unref(blacklist);
+        g_variant_iter_free(iter);
+
+        return result;
+    }
+
 
     static void on_sound_proxy_ready(GObject* /*source_object*/, GAsyncResult* res, gpointer gself)
     {
