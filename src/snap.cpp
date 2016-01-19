@@ -172,6 +172,11 @@ private:
         GSettings *cunh = g_settings_new("com.ubuntu.notifications.hub");
         GVariant *blacklist = g_settings_get_value(cunh, "blacklist");
 
+        if (blacklist == NULL) {
+            g_warning("%s Couldn't find notifications blacklist", G_STRLOC);
+            return false;
+        }
+
         GVariantIter *iter;
         g_variant_get(blacklist, "a(ss)", &iter);
 
@@ -182,6 +187,7 @@ private:
         while(g_variant_iter_loop(iter, "(ss)", &pkg, &app)) {
             if (g_strcmp0(pkg, "com.ubuntu.calendar")) {
                 result = true; // ie, don't show the appointments
+                g_debug("%s calendar notifications blacklisted", G_STRLOC);
                 g_free(pkg);
                 g_free(app);
                 break;
