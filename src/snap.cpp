@@ -185,9 +185,9 @@ private:
         bool result = false;
 
         while(g_variant_iter_loop(iter, "(ss)", &pkg, &app)) {
-            if (g_strcmp0(pkg, "com.ubuntu.calendar")) {
+            if (g_strcmp0(pkg, "com.ubuntu.calendar") == 0) {
                 result = true; // ie, don't show the appointments
-                g_debug("%s calendar notifications blacklisted", G_STRLOC);
+                g_info("%s calendar notifications blacklisted", G_STRLOC);
                 g_free(pkg);
                 g_free(app);
                 break;
