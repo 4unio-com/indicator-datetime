@@ -146,7 +146,7 @@ LiveSettings::LiveSettings():
     });
 
     alarm_volume.changed().connect([this](unsigned int value){
-        g_settings_set_uint(m_settings, SETTINGS_ALARM_VOLUME_S, value);
+#warning set pulse from property
     });
 
     alarm_duration.changed().connect([this](unsigned int value){
@@ -284,7 +284,7 @@ void LiveSettings::update_alarm_sound()
 
 void LiveSettings::update_alarm_volume()
 {
-    alarm_volume.set(g_settings_get_uint(m_settings, SETTINGS_ALARM_VOLUME_S));
+#warning set property from pulse
 }
 
 void LiveSettings::update_alarm_duration()
@@ -366,8 +366,6 @@ void LiveSettings::update_key_ccid(const std::string& key)
         update_calendar_sound();
     else if (key == SETTINGS_ALARM_SOUND_S)
         update_alarm_sound();
-    else if (key == SETTINGS_ALARM_VOLUME_S)
-        update_alarm_volume();
     else if (key == SETTINGS_ALARM_DURATION_S)
         update_alarm_duration();
     else if (key == SETTINGS_ALARM_HAPTIC_S)
