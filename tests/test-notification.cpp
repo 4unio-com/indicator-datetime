@@ -21,6 +21,7 @@
 #include <datetime/settings.h>
 #include <datetime/snap.h>
 
+#include "mock-sound-builder.h"
 #include "notification-fixture.h"
 
 /***
@@ -52,7 +53,7 @@ TEST_F(NotificationFixture,Notification)
 
   auto settings = std::make_shared<Settings>();
   auto ne = std::make_shared<unity::indicator::notifications::Engine>(APP_NAME);
-  auto sb = std::make_shared<unity::indicator::notifications::DefaultSoundBuilder>();
+  auto sb = std::make_shared<unity::indicator::notifications::MockSoundBuilder>();
   auto func = [this](const Appointment&, const Alarm&){g_idle_add(quit_idle, loop);};
 
   // combinatorial factor #1: event type

@@ -21,6 +21,7 @@
 #include <datetime/settings.h>
 #include <datetime/snap.h>
 
+#include "mock-sound-builder.h"
 #include "notification-fixture.h"
 
 using namespace unity::indicator::datetime;
@@ -55,8 +56,8 @@ TEST_F(NotificationFixture, InteractiveDuration)
   static constexpr int duration_minutes = 120;
   auto settings = std::make_shared<Settings>();
   settings->alarm_duration.set(duration_minutes);
-  auto ne = std::make_shared<unity::indicator::notifications::Engine>(APP_NAME);
-  auto sb = std::make_shared<unity::indicator::notifications::DefaultSoundBuilder>();
+  auto ne = std::make_shared<uin::Engine>(APP_NAME);
+  auto sb = std::make_shared<uin::MockSoundBuilder>();
   auto snap = create_snap(ne, sb, settings);
 
   make_interactive();
@@ -103,36 +104,6 @@ TEST_F(NotificationFixture, InteractiveDuration)
 ****
 ***/
 
-/**
- * A DefaultSoundBuilder wrapper which remembers the parameters of the last sound created.
- */
-class TestSoundBuilder: public uin::SoundBuilder
-{
-public:
-    TestSoundBuilder() =default;
-    ~TestSoundBuilder() =default;
-
-    virtual std::shared_ptr<uin::Sound> create(const std::string& role, const std::string& uri, unsigned int volume, bool loop) override {
-        m_role = role;
-        m_uri = uri;
-        m_volume = volume;
-        m_loop = loop;
-        return m_impl.create(role, uri, volume, loop);
-    }
-
-    const std::string& role() { return m_role; }
-    const std::string& uri() { return m_uri; }
-    unsigned int volume() { return m_volume; }
-    bool loop() { return m_loop; }
-
-private:
-    std::string m_role;
-    std::string m_uri;
-    unsigned int m_volume;
-    bool m_loop;
-    uin::DefaultSoundBuilder m_impl;
-};
-
 std::string path_to_uri(const std::string& path)
 {
   auto file = g_file_new_for_path(path.c_str());
@@ -146,8 +117,8 @@ std::string path_to_uri(const std::string& path)
 TEST_F(NotificationFixture,DefaultSounds)
 {
   auto settings = std::make_shared<Settings>();
-  auto ne = std::make_shared<unity::indicator::notifications::Engine>(APP_NAME);
-  auto sb = std::make_shared<TestSoundBuilder>();
+  auto ne = std::make_shared<uin::Engine>(APP_NAME);
+  auto sb = std::make_shared<uin::MockSoundBuilder>();
   auto func = [this](const Appointment&, const Alarm&){g_idle_add(quit_idle, loop);};
 
   const struct {
