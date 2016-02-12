@@ -38,7 +38,7 @@ include_directories (${DBUSTEST_INCLUDE_DIRS})
 
 # mocks
 set(TEST_MOCKS_LIB "testmocks")
-set(TEST_MOCKS_SOURCES mock-sound.cc)
+set(TEST_MOCKS_SOURCES mock-sound.cpp)
 set_source_files_properties(${TEST_MOCKS_SOURCES} PROPERTIES COMPILE_FLAGS "${CXX_WARNING_ARGS} -g")
 add_library(${TEST_MOCKS_LIB} STATIC ${TEST_MOCKS_SOURCES})
 
