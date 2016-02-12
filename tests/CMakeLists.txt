@@ -5,7 +5,7 @@ add_library (gtest STATIC
 set_target_properties (gtest PROPERTIES INCLUDE_DIRECTORIES ${INCLUDE_DIRECTORIES} ${GTEST_INCLUDE_DIR})
 set_target_properties (gtest PROPERTIES COMPILE_FLAGS ${COMPILE_FLAGS} -w)
 
-SET (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -g ${CC_WARNING_ARGS}")
+SET (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g ${CC_WARNING_ARGS}")
 
 # dbustest
 pkg_check_modules(DBUSTEST REQUIRED
@@ -36,6 +36,11 @@ include_directories (${CMAKE_BINARY_DIR}/src)
 include_directories (${CMAKE_CURRENT_BINARY_DIR})
 include_directories (${DBUSTEST_INCLUDE_DIRS})
 
+# mocks
+set(TEST_MOCKS_LIB "testmocks")
+set(TEST_MOCKS_SOURCES mock-sound.cc)
+set_source_files_properties(${TEST_MOCKS_SOURCES} PROPERTIES COMPILE_FLAGS "${CXX_WARNING_ARGS} -g")
+add_library(${TEST_MOCKS_LIB} STATIC ${TEST_MOCKS_SOURCES})
 
 add_definitions (-DSANDBOX="${CMAKE_CURRENT_BINARY_DIR}")
 add_definitions (-DG_LOG_DOMAIN="Indicator-Datetime")
@@ -44,7 +49,7 @@ function(add_test_by_name name)
   set (TEST_NAME ${name})
   add_executable (${TEST_NAME} ${TEST_NAME}.cpp gschemas.compiled)
   add_test (${TEST_NAME} ${TEST_NAME})
-  target_link_libraries (${TEST_NAME} indicatordatetimeservice gtest ${DBUSTEST_LIBRARIES} ${SERVICE_DEPS_LIBRARIES} ${GTEST_LIBS})
+  target_link_libraries (${TEST_NAME} indicatordatetimeservice gtest ${TEST_MOCKS_LIB} ${DBUSTEST_LIBRARIES} ${SERVICE_DEPS_LIBRARIES} ${GTEST_LIBS})
 endfunction()
 add_test_by_name(test-datetime)
 add_test_by_name(test-sound)
