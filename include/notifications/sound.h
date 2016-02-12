@@ -35,13 +35,12 @@ namespace notifications {
  * Plays a sound, possibly looping.
  *
  * @param uri the file to play
- * @param volume the volume at which to play the sound, [0..100]
  * @param loop if true, loop the sound for the lifespan of the object
  */
 class Sound
 {
 public:
-    Sound(const std::string& role, const std::string& uri, unsigned int volume, bool loop);
+    Sound(const std::string& role, const std::string& uri, bool loop);
     ~Sound();
 
 private:
@@ -58,7 +57,7 @@ class SoundBuilder
 public:
     SoundBuilder() =default;
     virtual ~SoundBuilder() =default;
-    virtual std::shared_ptr<Sound> create(const std::string& role, const std::string& uri, unsigned int volume, bool loop) =0;
+    virtual std::shared_ptr<Sound> create(const std::string& role, const std::string& uri, bool loop) =0;
 };
 
 class DefaultSoundBuilder: public SoundBuilder
@@ -66,8 +65,8 @@ class DefaultSoundBuilder: public SoundBuilder
 public:
     DefaultSoundBuilder() =default;
     ~DefaultSoundBuilder() =default;
-    virtual std::shared_ptr<Sound> create(const std::string& role, const std::string& uri, unsigned int volume, bool loop) override {
-        return std::make_shared<Sound>(role, uri, volume, loop);
+    virtual std::shared_ptr<Sound> create(const std::string& role, const std::string& uri, bool loop) override {
+        return std::make_shared<Sound>(role, uri, loop);
     }
 };
 

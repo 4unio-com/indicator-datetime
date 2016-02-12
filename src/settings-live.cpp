@@ -145,7 +145,7 @@ LiveSettings::LiveSettings():
         g_settings_set_string(m_settings, SETTINGS_ALARM_SOUND_S, value.c_str());
     });
 
-    alarm_volume.changed().connect([this](unsigned int value){
+    alarm_volume.changed().connect([this](unsigned int /*value*/){
 #warning set pulse from property
     });
 

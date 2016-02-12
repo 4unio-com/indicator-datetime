@@ -40,11 +40,9 @@ public:
 
     Impl(const std::string& role,
          const std::string& uri,
-         unsigned int volume,
          bool loop):
         m_role(role),
         m_uri(uri),
-        m_volume(volume),
         m_loop(loop)
     {
         // init GST once
@@ -66,7 +64,6 @@ public:
 
         g_debug("Playing '%s'", m_uri.c_str());
         g_object_set(G_OBJECT (m_play), "uri", m_uri.c_str(),
-                                        "volume", get_volume(),
                                         nullptr);
         gst_element_set_state (m_play, GST_STATE_PLAYING);
     }
@@ -84,6 +81,8 @@ public:
 
 private:
 
+#warning reuse this
+#if 0
     // convert settings range [1..100] to gst playbin's range is [0...1.0]
     gdouble get_volume() const
     {
@@ -96,6 +95,7 @@ private:
         constexpr double out_range_hi = 1.0; 
         return out_range_lo + (pct * (out_range_hi - out_range_lo));
     }
+#endif
 
     static gboolean bus_callback(GstBus*, GstMessage* msg, gpointer gself)
     {
@@ -143,14 +143,13 @@ private:
 
     const std::string m_role;
     const std::string m_uri;
-    const unsigned int m_volume;
     const bool m_loop;
     guint m_watch_source = 0;
     GstElement* m_play = nullptr;
 };
 
-Sound::Sound(const std::string& role, const std::string& uri, unsigned int volume, bool loop):
-  impl (new Impl(role, uri, volume, loop))
+Sound::Sound(const std::string& role, const std::string& uri, bool loop):
+  impl (new Impl(role, uri, loop))
 {
 }
 
