@@ -63,7 +63,7 @@ GMenuModel* Menu::menu_model()
 
 
 #define ALARM_ICON_NAME "alarm-clock"
-#define CALENDAR_ICON_NAME "calendar"
+#define CALENDAR_ICON_NAME "appointment"
 
 class MenuImpl: public Menu
 {
@@ -160,7 +160,7 @@ protected:
         for(const auto& a : m_state->calendar_upcoming->appointments().get())
             if (begin <= a.begin)
                 upcoming.push_back(a);
- 
+
         if (m_upcoming != upcoming)
         {
             m_upcoming.swap(upcoming);
@@ -590,7 +590,7 @@ MenuFactory::buildMenu(Menu::Profile profile)
         g_warn_if_reached();
         break;
     }
-    
+
     return menu;
 }
 
