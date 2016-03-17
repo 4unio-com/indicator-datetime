@@ -1,0 +1,11 @@
+--- a/src/menu.cpp
++++ b/src/menu.cpp
+@@ -158,7 +158,7 @@
+ 
+         std::vector<Appointment> upcoming;
+         for(const auto& a : m_state->calendar_upcoming->appointments().get())
+-            if (begin <= a.begin)
++            if (begin <= a.end)
+                 upcoming.push_back(a);
+  
+         if (m_upcoming != upcoming)
