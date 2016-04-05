@@ -129,35 +129,14 @@ public:
             auto extension = e_source_get_extension(source, E_SOURCE_EXTENSION_CALENDAR);
             const auto color = e_source_selectable_get_color(E_SOURCE_SELECTABLE(extension));
 
-            auto begin_str = isodate_from_time_t(begin.to_unix());
-            auto end_str = isodate_from_time_t(end.to_unix());
-            auto sexp_fmt = g_strdup_printf("(%%s? (make-time \"%s\") (make-time \"%s\"))", begin_str, end_str);
-            g_clear_pointer(&begin_str, g_free);
-            g_clear_pointer(&end_str, g_free);
-
-            // ask EDS about alarms that occur in this window...
-            auto sexp = g_strdup_printf(sexp_fmt, "has-alarms-in-range");
-            g_debug("%s alarm sexp is %s", G_STRLOC, sexp);
-            e_cal_client_get_object_list_as_comps(
+            e_cal_client_generate_instances(
                 client,
-                sexp,
+                begin.to_unix(),
+                end.to_unix(),
                 m_cancellable.get(),
-                on_alarm_component_list_ready,
-                new ClientSubtask(main_task, client, m_cancellable, color));
-            g_clear_pointer(&sexp, g_free);
-
-            // ask EDS about events that occur in this window...
-            sexp = g_strdup_printf(sexp_fmt, "occur-in-time-range");
-            g_debug("%s event sexp is %s", G_STRLOC, sexp);
-            e_cal_client_get_object_list_as_comps(
-                client,
-                sexp,
-                m_cancellable.get(),
-                on_event_component_list_ready,
-                new ClientSubtask(main_task, client, m_cancellable, color));
-            g_clear_pointer(&sexp, g_free);
-
-            g_clear_pointer(&sexp_fmt, g_free);
+                on_event_generated,
+                new ClientSubtask(main_task, client, m_cancellable, color),
+                on_event_generated_list_ready);
         }
     }
 
@@ -595,6 +574,8 @@ private:
         ECalClient* client;
         std::shared_ptr<GCancellable> cancellable;
         std::string color;
+        GList *components;
+        GList *global_components;
 
         ClientSubtask(const std::shared_ptr<Task>& task_in,
                       ECalClient* client_in,
@@ -602,10 +583,13 @@ private:
                       const char* color_in):
             task(task_in),
             client(client_in),
-            cancellable(cancellable_in)
+            cancellable(cancellable_in),
+            components(nullptr),
+            global_components(nullptr)
         {
             if (color_in)
                 color = color_in;
+
         }
     };
 
@@ -652,77 +636,109 @@ private:
         return ret;
     }
 
-    static void
-    on_alarm_component_list_ready(GObject      * oclient,
-                                  GAsyncResult * res,
-                                  gpointer       gsubtask)
+    static gboolean
+    on_event_generated(ECalComponent *comp,
+                       time_t,
+                       time_t,
+                       gpointer gsubtask)
     {
-        GError * error = NULL;
-        GSList * comps_slist = NULL;
         auto subtask = static_cast<ClientSubtask*>(gsubtask);
+        const gchar *uid = nullptr;
+        e_cal_component_get_uid (comp, &uid);
+        g_debug("COMP (%p):%s", (void*) comp, uid);
+        g_object_ref(comp);
+        subtask->components = g_list_append(subtask->components, comp);
+        return TRUE;
+    }
 
-        if (e_cal_client_get_object_list_as_comps_finish(E_CAL_CLIENT(oclient),
-                                                         res,
-                                                         &comps_slist,
-                                                         &error))
+    static void
+    on_event_generated_list_ready(gpointer gsubtask)
+    {
+        auto subtask = static_cast<ClientSubtask*>(gsubtask);
+        if (g_list_length(subtask->components) > 0) {
+            auto l = g_list_first(subtask->components);
+            ECalComponent *comp = static_cast<ECalComponent*>(l->data);
+            subtask->components = g_list_remove_link(subtask->components, l);
+
+            bool has_recurrence = e_cal_component_has_recurrences(comp);
+            subtask->global_components = g_list_append(subtask->global_components, comp);
+
+            if (has_recurrence)
+            {
+                const gchar *uid = nullptr;
+                e_cal_component_get_uid(comp, &uid);
+
+                g_debug(" GET COMPONENTS FOR UID: (%p): %s", comp, uid);
+                e_cal_client_get_objects_for_uid(subtask->client,
+                                                 uid,
+                                                 subtask->cancellable.get(),
+                                                 on_event_retrieved,
+                                                 gsubtask);
+            }
+            else
+            {
+                on_event_generated_list_ready(gsubtask);
+            }
+        }
+        else
         {
-            // _generate_alarms takes a GList, so make a shallow one
-            GList * comps_list = nullptr;
-            for (auto l=comps_slist; l!=nullptr; l=l->next)
-                comps_list = g_list_prepend(comps_list, l->data);
-
+            // generate alarms
             constexpr std::array<ECalComponentAlarmAction,1> omit = {
                 (ECalComponentAlarmAction)-1
             }; // list of action types to omit, terminated with -1
             GSList * comp_alarms = nullptr;
             e_cal_util_generate_alarms_for_list(
-                comps_list,
+                subtask->global_components,
                 subtask->task->begin.to_unix(),
                 subtask->task->end.to_unix(),
                 const_cast<ECalComponentAlarmAction*>(omit.data()),
                 &comp_alarms,
                 e_cal_client_resolve_tzid_cb,
-                oclient,
+                subtask->client,
                 subtask->task->default_timezone);
 
             // walk the alarms & add them
             for (auto l=comp_alarms; l!=nullptr; l=l->next)
                 add_alarms_to_subtask(static_cast<ECalComponentAlarms*>(l->data), subtask, subtask->task->gtz);
 
-            // cleanup
-            e_cal_free_alarms(comp_alarms);
-            g_list_free(comps_list);
-            e_cal_client_free_ecalcomp_slist(comps_slist);
-        }
-        else if (error != nullptr)
-        {
-            if (!g_error_matches(error, G_IO_ERROR, G_IO_ERROR_CANCELLED))
-                g_warning("can't get ecalcomponent list: %s", error->message);
 
-            g_error_free(error);
-        }
+            // add events
+            for (auto l=subtask->global_components; l!=nullptr; l=l->next) {
+                auto component = static_cast<ECalComponent*>(l->data);
+                if (!e_cal_component_has_alarms(component))
+                    add_event_to_subtask(static_cast<ECalComponent*>(l->data), subtask, subtask->task->gtz);
+            }
 
-        delete subtask;
+            g_list_free_full(subtask->global_components, g_object_unref);
+
+            g_debug("QUERY EMPTY DONE>>>>>>>>>>>>>");
+            delete subtask;
+        }
     }
 
     static void
-    on_event_component_list_ready(GObject      * oclient,
-                                  GAsyncResult * res,
-                                  gpointer       gsubtask)
+    on_event_retrieved (GObject *,
+                        GAsyncResult * res,
+                        gpointer gsubtask)
     {
-        GError * error = NULL;
-        GSList * comps_slist = NULL;
+        GError * error = nullptr;
+        GSList * comps_slist = nullptr;
         auto subtask = static_cast<ClientSubtask*>(gsubtask);
 
-        if (e_cal_client_get_object_list_as_comps_finish(E_CAL_CLIENT(oclient),
-                                                         res,
-                                                         &comps_slist,
-                                                         &error))
+        if (e_cal_client_get_objects_for_uid_finish(subtask->client,
+                                                    res,
+                                                    &comps_slist,
+                                                    &error))
         {
+            g_debug("LIST::::::::::::::%d", g_slist_length(comps_slist));
             for (auto l=comps_slist; l!=nullptr; l=l->next)
-                add_event_to_subtask(static_cast<ECalComponent*>(l->data), subtask, subtask->task->gtz);
-
+            {
+                auto comp = static_cast<ECalComponent*>(l->data);
+                g_object_ref(comp);
+                subtask->global_components = g_list_append(subtask->global_components, comp);
+            }
             e_cal_client_free_ecalcomp_slist(comps_slist);
+
         }
         else if (error != nullptr)
         {
@@ -732,8 +748,9 @@ private:
             g_error_free(error);
         }
 
-        delete subtask;
+        on_event_generated_list_ready (gsubtask);
     }
+
 
     static DateTime
     datetime_from_component_date_time(ECalClient                     * client,
@@ -929,28 +946,6 @@ private:
     }
 
     static void
-    add_event_to_subtask(ECalComponent * component,
-                         ClientSubtask * subtask,
-                         GTimeZone     * gtz)
-    {
-        // events with alarms are covered by add_alarms_to_subtask(),
-        // so skip them here
-        auto auids = e_cal_component_get_alarm_uids(component);
-        const bool has_alarms = auids != nullptr;
-        cal_obj_uid_list_free(auids);
-        if (has_alarms)
-            return;
-
-        // add it. simple, eh?
-        if (subtask->task->p->is_component_interesting(component))
-        {
-            Appointment appointment = get_appointment(subtask->client, subtask->cancellable, component, gtz);
-            appointment.color = subtask->color;
-            subtask->task->appointments.push_back(appointment);
-        }
-    }
-
-    static void
     add_alarms_to_subtask(ECalComponentAlarms * comp_alarms,
                           ClientSubtask       * subtask,
                           GTimeZone           * gtz)
@@ -1013,6 +1008,22 @@ private:
             for (auto& j : i.second)
                 appointment.alarms.push_back(j.second);
             subtask->task->appointments.push_back(appointment);
+        }
+    }
+
+    static void
+    add_event_to_subtask(ECalComponent * component,
+                         ClientSubtask * subtask,
+                         GTimeZone     * gtz)
+    {
+        // add it. simple, eh?
+        if (subtask->task->p->is_component_interesting(component))
+        {
+            Appointment appointment = get_appointment(subtask->client, subtask->cancellable, component, gtz);
+            appointment.color = subtask->color;
+            subtask->task->appointments.push_back(appointment);
+        } else {
+            g_debug("EVENT NOT INTERESTING: (%p)", component);
         }
     }
 

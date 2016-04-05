@@ -110,6 +110,7 @@ TEST_F(VAlarmFixture, MissingTriggers)
 
     // the planner should match what we've got in the calendar.ics file
     const auto appts = planner->appointments().get();
+    EXPECT_EQ(expected.size(), appts.size());
     EXPECT_EQ(expected, appts);
 
     // cleanup
