@@ -23,10 +23,8 @@
 #include <glib.h>
 #include <gio/gio.h>
 
-#include <map>
 #include <set>
 #include <string>
-#include <vector>
 
 namespace unity {
 namespace indicator {
@@ -41,74 +39,112 @@ class Clock::Impl
 public:
 
     Impl(Clock& owner):
-        m_owner(owner),
-        m_cancellable(g_cancellable_new())
+        m_owner{owner},
+        m_cancellable{g_cancellable_new()}
     {
-        g_bus_get(G_BUS_TYPE_SYSTEM, m_cancellable, on_bus_ready, this);
+        g_bus_get(G_BUS_TYPE_SYSTEM, m_cancellable, on_system_bus_ready_static, this);
     }
 
     ~Impl()
     {
         g_cancellable_cancel(m_cancellable);
-        g_object_unref(m_cancellable);
+        g_clear_object(&m_cancellable);
 
         for(const auto& tag : m_watched_names)
             g_bus_unwatch_name(tag);
+
+        for(const auto& subscription : m_subscriptions)
+            g_dbus_connection_signal_unsubscribe(m_system_bus, subscription);
+
+        g_clear_object(&m_system_bus);
     }
 
 private:
 
-    static void on_bus_ready(GObject      * /*source_object*/,
-                             GAsyncResult * res,
-                             gpointer       gself)
+    static void on_system_bus_ready_static(
+        GObject* /*source_object*/,
+        GAsyncResult* res,
+        gpointer gself)
     {
-        GError * error = NULL;
-        GDBusConnection * bus;
+        GError* error {};
+        auto system_bus = g_bus_get_finish(res, &error);
 
-        if ((bus = g_bus_get_finish(res, &error)))
-        {
-            auto self = static_cast<Impl*>(gself);
-
-            auto tag = g_bus_watch_name_on_connection(bus,
-                                                      "org.freedesktop.login1",
-                                                      G_BUS_NAME_WATCHER_FLAGS_NONE,
-                                                      on_login1_appeared,
-                                                      on_login1_vanished,
-                                                      gself, nullptr);
-            self->m_watched_names.insert(tag);
-
-            tag = g_bus_watch_name_on_connection(bus,
-                                                 BUS_POWERD_NAME,
-                                                 G_BUS_NAME_WATCHER_FLAGS_NONE,
-                                                 on_powerd_appeared,
-                                                 on_powerd_vanished,
-                                                 gself, nullptr);
-            self->m_watched_names.insert(tag);
-
-            g_object_unref(bus);
-        }
-        else if (error != nullptr)
+        if (error != nullptr)
         {
             if (!g_error_matches(error, G_IO_ERROR, G_IO_ERROR_CANCELLED))
-                g_warning("%s Couldn't get system bus: %s", G_STRLOC, error->message);
+                g_warning("Unable to get system bus for clock: %s", error->message);
 
-            g_error_free(error);
+            g_clear_error(&error);
+        }
+        else if (system_bus != nullptr)
+        {
+            static_cast<Impl*>(gself)->on_system_bus_ready(system_bus);
+            g_clear_object(&system_bus);
         }
     }
 
-    void remember_subscription(const std::string  & name,
-                               GDBusConnection    * bus,
-                               guint                tag)
+    void on_system_bus_ready(GDBusConnection* system_bus)
     {
-        g_object_ref(bus);
+        g_return_if_fail(m_system_bus == nullptr); // should only get called once...
 
-        auto deleter = [tag](GDBusConnection* bus){
-            g_dbus_connection_signal_unsubscribe(bus, tag);
-            g_object_unref(G_OBJECT(bus));
-        };
+        m_system_bus = G_DBUS_CONNECTION(g_object_ref(system_bus));
+     
+        m_watched_names.insert(
+            g_bus_watch_name_on_connection(
+                m_system_bus,
+                "org.freedesktop.login1",
+                G_BUS_NAME_WATCHER_FLAGS_NONE,
+                on_login1_appeared,
+                on_login1_vanished,
+                this,
+                nullptr
+            )
+        );
 
-        m_subscriptions[name].push_back(std::shared_ptr<GDBusConnection>(bus, deleter));
+        m_watched_names.insert(
+            g_bus_watch_name_on_connection(
+                m_system_bus,
+                BUS_POWERD_NAME,
+                G_BUS_NAME_WATCHER_FLAGS_NONE,
+                on_powerd_appeared,
+                on_powerd_vanished,
+                this,
+                nullptr
+            )
+        );
+
+        m_subscriptions.insert(
+            g_dbus_connection_signal_subscribe(
+                m_system_bus,
+                nullptr, // sender
+                "org.freedesktop.login1.Manager", // interface
+                "PrepareForSleep", // signal name
+                "/org/freedesktop/login1", // object path
+                nullptr, // arg0
+                G_DBUS_SIGNAL_FLAGS_NONE,
+                on_prepare_for_sleep,
+                this,
+                nullptr
+            )
+        );
+
+        m_subscriptions.insert(
+            g_dbus_connection_signal_subscribe(
+                m_system_bus,
+                nullptr, // sender
+                BUS_POWERD_INTERFACE,
+                "SysPowerStateChange",
+                BUS_POWERD_PATH,
+                nullptr, // arg0
+                G_DBUS_SIGNAL_FLAGS_NONE,
+                on_sys_power_state_change,
+                this, // user_data
+                nullptr
+            )
+        );
     }
+
+private:
 
     /**
     ***  DBus Chatter: org.freedesktop.login1
@@ -116,42 +152,36 @@ private:
     ***  Fire Clock::minute_changed() signal on login1's PrepareForSleep signal
     **/
 
-    static void on_login1_appeared(GDBusConnection * bus,
-                                   const gchar     * name,
-                                   const gchar     * name_owner,
-                                   gpointer          gself)
+    static void on_login1_appeared(GDBusConnection* /*connection*/,
+                                   const gchar* /*name*/,
+                                   const gchar* name_owner,
+                                   gpointer gself)
     {
-        auto tag = g_dbus_connection_signal_subscribe(bus,
-                                                      name_owner,
-                                                      "org.freedesktop.login1.Manager", // interface
-                                                      "PrepareForSleep", // signal name
-                                                      "/org/freedesktop/login1", // object path
-                                                      nullptr, // arg0
-                                                      G_DBUS_SIGNAL_FLAGS_NONE,
-                                                      on_prepare_for_sleep,
-                                                      gself,
-                                                      nullptr);
-
-        static_cast<Impl*>(gself)->remember_subscription(name, bus, tag);
+        static_cast<Impl*>(gself)->m_login1_owner = name_owner;
     }
 
-    static void on_login1_vanished(GDBusConnection * /*system_bus*/,
-                                   const gchar     * name,
-                                   gpointer          gself)
+    static void on_login1_vanished(GDBusConnection* /*connection*/,
+                                   const gchar* /*name*/,
+                                   gpointer gself)
     {
-      static_cast<Impl*>(gself)->m_subscriptions[name].clear();
+        static_cast<Impl*>(gself)->m_login1_owner.clear();
     }
 
     static void on_prepare_for_sleep(GDBusConnection* /*connection*/,
-                                     const gchar*     /*sender_name*/,
-                                     const gchar*     /*object_path*/,
-                                     const gchar*     /*interface_name*/,
-                                     const gchar*     /*signal_name*/,
-                                     GVariant*        /*parameters*/,
-                                     gpointer           gself)
+                                     const gchar* sender_name,
+                                     const gchar* /*object_path*/,
+                                     const gchar* /*interface_name*/,
+                                     const gchar* signal_name,
+                                     GVariant* /*parameters*/,
+                                     gpointer gself)
     {
-        g_debug("firing clock.minute_changed() due to PrepareForSleep");
-        static_cast<Impl*>(gself)->m_owner.minute_changed();
+        auto self = static_cast<Impl*>(gself);
+        const char* owner = self->m_login1_owner.c_str();
+
+        if(!g_strcmp0(sender_name, owner))
+            self->m_owner.minute_changed();
+        else
+            g_warning("discarding signal '%s' from '%s', expected sender '%s'", signal_name, sender_name, owner);
     }
 
     /**
@@ -161,43 +191,36 @@ private:
     ***  has awoken from sleep -- the old timestamp is likely out-of-date
     **/
 
-    static void on_powerd_appeared(GDBusConnection * bus,
-                                   const gchar     * name,
-                                   const gchar     * name_owner,
-                                   gpointer          gself)
+    static void on_powerd_appeared(GDBusConnection* /*connection*/,
+                                   const gchar* /*name*/,
+                                   const gchar* name_owner,
+                                   gpointer gself)
     {
-        auto tag = g_dbus_connection_signal_subscribe(bus,
-                                                      name_owner,
-                                                      BUS_POWERD_INTERFACE,
-                                                      "SysPowerStateChange",
-                                                      BUS_POWERD_PATH,
-                                                      nullptr, // arg0
-                                                      G_DBUS_SIGNAL_FLAGS_NONE,
-                                                      on_sys_power_state_change,
-                                                      gself, // user_data
-                                                      nullptr); // user_data closure
-
-
-        static_cast<Impl*>(gself)->remember_subscription(name, bus, tag);
+        static_cast<Impl*>(gself)->m_powerd_owner = name_owner;
     }
 
-    static void on_powerd_vanished(GDBusConnection * /*bus*/,
-                                   const gchar     * name,
-                                   gpointer          gself)
+    static void on_powerd_vanished(GDBusConnection* /*connection*/,
+                                   const gchar* /*name*/,
+                                   gpointer gself)
     {
-        static_cast<Impl*>(gself)->m_subscriptions[name].clear();
+        static_cast<Impl*>(gself)->m_powerd_owner.clear();
     }
 
     static void on_sys_power_state_change(GDBusConnection* /*connection*/,
-                                            const gchar*     /*sender_name*/,
-                                            const gchar*     /*object_path*/,
-                                            const gchar*     /*interface_name*/,
-                                            const gchar*     /*signal_name*/,
-                                            GVariant*        /*parameters*/,
-                                            gpointer           gself)
+                                          const gchar* sender_name,
+                                          const gchar* /*object_path*/,
+                                          const gchar* /*interface_name*/,
+                                          const gchar* signal_name,
+                                          GVariant* /*parameters*/,
+                                          gpointer gself)
     {
-        g_debug("firing clock.minute_changed() due to state change");
-        static_cast<Impl*>(gself)->m_owner.minute_changed();
+        auto self = static_cast<Impl*>(gself);
+        const char* owner = self->m_powerd_owner.c_str();
+
+        if (!g_strcmp0(sender_name, owner))
+            self->m_owner.minute_changed();
+        else
+            g_warning("discarding signal '%s' from '%s', expected sender '%s'", signal_name, sender_name, owner);
     }
 
     /***
@@ -205,9 +228,12 @@ private:
     ***/
 
     Clock& m_owner;
-    GCancellable * m_cancellable = nullptr;
+    GCancellable * m_cancellable {};
+    GDBusConnection* m_system_bus {};
     std::set<guint> m_watched_names;
-    std::map<std::string,std::vector<std::shared_ptr<GDBusConnection>>> m_subscriptions;
+    std::set<guint> m_subscriptions;
+    std::string m_login1_owner;
+    std::string m_powerd_owner;
 };
 
 /***
@@ -215,7 +241,7 @@ private:
 ***/
 
 Clock::Clock():
-   m_impl(new Impl{*this})
+   m_impl{new Impl{*this}}
 {
 }
 
