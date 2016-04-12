@@ -26,15 +26,26 @@
 #include <datetime/dbus-shared.h>
 #include <datetime/timezone.h>
 
+#include <string>
+#include <vector>
+
 /***
 ****
 ***/
 
 struct GTestDBusFixture: public GlibFixture
 {
+public:
+
+    GTestDBusFixture() =default;
+    virtual ~GTestDBusFixture() =default;
+    explicit GTestDBusFixture(const std::vector<std::string>& service_dirs): m_service_dirs(service_dirs) {}
+
 private:
 
     using super = GlibFixture;
+
+    std::vector<std::string> m_service_dirs;
 
 protected:
 
@@ -47,6 +58,10 @@ protected:
 
         // set up a test bus
         m_test_bus = g_test_dbus_new(G_TEST_DBUS_NONE);
+        for (const auto& dir : m_service_dirs) {
+            g_debug("adding dbus service dir '%s'", dir.c_str());
+            g_test_dbus_add_service_dir(m_test_bus, dir.c_str());
+        }
         g_test_dbus_up(m_test_bus);
         const char * address = g_test_dbus_get_bus_address(m_test_bus);
         g_setenv("DBUS_SYSTEM_BUS_ADDRESS", address, true);
