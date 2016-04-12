@@ -19,7 +19,7 @@
 
 #include "actions-mock.h"
 #include "state-mock.h"
-#include "glib-fixture.h"
+#include "gtestdbus-fixture.h"
 
 #include "dbus-alarm-properties.h"
 
@@ -32,42 +32,7 @@
 
 using namespace unity::indicator::datetime;
 
-class ExporterFixture: public GlibFixture
-{
-private:
-
-    typedef GlibFixture super;
-
-protected:
-
-    GTestDBus* bus = nullptr;
-
-    void SetUp() override
-    {
-        super::SetUp();
-
-        // bring up the test bus
-        bus = g_test_dbus_new(G_TEST_DBUS_NONE);
-        g_test_dbus_up(bus);
-        const auto address = g_test_dbus_get_bus_address(bus);
-        g_setenv("DBUS_SYSTEM_BUS_ADDRESS", address, true);
-        g_setenv("DBUS_SESSION_BUS_ADDRESS", address, true);
-    }
-
-    void TearDown() override
-    {
-        GError * error = nullptr;
-        GDBusConnection* connection = g_bus_get_sync(G_BUS_TYPE_SESSION, nullptr, &error);
-        if(!g_dbus_connection_is_closed(connection))
-            g_dbus_connection_close_sync(connection, nullptr, &error);
-        g_assert_no_error(error);
-        g_clear_object(&connection);
-        g_test_dbus_down(bus);
-        g_clear_object(&bus);
-
-        super::TearDown();
-    }
-};
+using ExporterFixture = GTestDBusFixture;
 
 TEST_F(ExporterFixture, HelloWorld)
 {
@@ -89,8 +54,7 @@ TEST_F(ExporterFixture, Publish)
     exporter.publish(actions, menus);
     wait_msec();
 
-    auto connection = g_bus_get_sync (G_BUS_TYPE_SESSION, nullptr, nullptr);
-    auto exported = g_dbus_action_group_get (connection, BUS_DATETIME_NAME, BUS_DATETIME_PATH);
+    auto exported = g_dbus_action_group_get (m_bus, BUS_DATETIME_NAME, BUS_DATETIME_PATH);
     auto names_strv = g_action_group_list_actions(G_ACTION_GROUP(exported));
 
     // wait for the exported ActionGroup to be populated
@@ -129,14 +93,13 @@ TEST_F(ExporterFixture, Publish)
         name_lost = true;
         g_main_loop_quit(loop);
     });
-    g_dbus_connection_close_sync(connection, nullptr, nullptr);
+    g_dbus_connection_close_sync(m_bus, nullptr, nullptr);
     g_main_loop_run(loop);
     EXPECT_TRUE(name_lost);
 
     // cleanup
     g_strfreev(names_strv);
     g_clear_object(&exported);
-    g_clear_object(&connection);
 }
 
 TEST_F(ExporterFixture, AlarmProperties)
