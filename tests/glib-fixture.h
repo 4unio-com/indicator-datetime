@@ -17,20 +17,17 @@
  * with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef INDICATOR_DATETIME_TESTS_GLIB_FIXTURE_H
-#define INDICATOR_DATETIME_TESTS_GLIB_FIXTURE_H
+#pragma once
 
-#include <functional> // std::function
-#include <map>
-#include <memory> // std::shared_ptr
-
-#include <glib.h>
-#include <glib/gstdio.h>
 #include <gio/gio.h>
 
 #include <gtest/gtest.h>
 
 #include <locale.h> // setlocale()
+
+#include <functional> // std::function
+#include <memory> // std::shared_ptr
+
 
 class GlibFixture : public ::testing::Test
 {
@@ -55,7 +52,6 @@ class GlibFixture : public ::testing::Test
       g_log_set_fatal_mask(G_LOG_DOMAIN, G_LOG_LEVEL_WARNING);
 
       g_unsetenv("DISPLAY");
-
     }
 
     virtual void TearDown() override
@@ -85,6 +81,8 @@ class GlibFixture : public ::testing::Test
       g_main_loop_quit(static_cast<GMainLoop*>(loop));
       return G_SOURCE_CONTINUE;
     }
+
+    static constexpr guint OWNED_TIMEOUT_MSEC {2000u};
 
   protected:
 
@@ -128,7 +126,7 @@ class GlibFixture : public ::testing::Test
     bool wait_for_name_owned(
         GDBusConnection* connection,
         const gchar* name,
-        guint timeout_msec=1000,
+        guint timeout_msec=OWNED_TIMEOUT_MSEC,
         GBusNameWatcherFlags flags=G_BUS_NAME_WATCHER_FLAGS_AUTO_START)
     {
       struct Data {
@@ -170,7 +168,7 @@ class GlibFixture : public ::testing::Test
 
     void EXPECT_NAME_OWNED_EVENTUALLY(GDBusConnection* connection,
                                       const gchar* name,
-                                      guint timeout_msec=1000,
+                                      guint timeout_msec=OWNED_TIMEOUT_MSEC,
                                       GBusNameWatcherFlags flags=G_BUS_NAME_WATCHER_FLAGS_AUTO_START)
     {
       EXPECT_TRUE(wait_for_name_owned(connection, name, timeout_msec, flags)) << "name: " << name;
@@ -178,7 +176,7 @@ class GlibFixture : public ::testing::Test
 
     void EXPECT_NAME_NOT_OWNED_EVENTUALLY(GDBusConnection* connection,
                                           const gchar* name,
-                                          guint timeout_msec=1000,
+                                          guint timeout_msec=OWNED_TIMEOUT_MSEC,
                                           GBusNameWatcherFlags flags=G_BUS_NAME_WATCHER_FLAGS_AUTO_START)
     {
       EXPECT_FALSE(wait_for_name_owned(connection, name, timeout_msec, flags)) << "name: " << name;
@@ -186,7 +184,7 @@ class GlibFixture : public ::testing::Test
 
     void ASSERT_NAME_OWNED_EVENTUALLY(GDBusConnection* connection,
                                       const gchar* name,
-                                      guint timeout_msec=1000,
+                                      guint timeout_msec=OWNED_TIMEOUT_MSEC,
                                       GBusNameWatcherFlags flags=G_BUS_NAME_WATCHER_FLAGS_AUTO_START)
     {
       ASSERT_TRUE(wait_for_name_owned(connection, name, timeout_msec, flags)) << "name: " << name;
@@ -194,7 +192,7 @@ class GlibFixture : public ::testing::Test
 
     void ASSERT_NAME_NOT_OWNED_EVENTUALLY(GDBusConnection* connection,
                                           const gchar* name,
-                                          guint timeout_msec=1000,
+                                          guint timeout_msec=OWNED_TIMEOUT_MSEC,
                                           GBusNameWatcherFlags flags=G_BUS_NAME_WATCHER_FLAGS_AUTO_START)
     {
       ASSERT_FALSE(wait_for_name_owned(connection, name, timeout_msec, flags)) << "name: " << name;
@@ -203,4 +201,3 @@ class GlibFixture : public ::testing::Test
     GMainLoop * loop;
 };
 
-#endif /* INDICATOR_DATETIME_TESTS_GLIB_FIXTURE_H */
