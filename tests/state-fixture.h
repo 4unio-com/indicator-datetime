@@ -17,10 +17,9 @@
  *   Charles Kerr <charles.kerr@canonical.com>
  */
 
-#ifndef INDICATOR_DATETIME_TESTS_STATE_FIXTURE_H
-#define INDICATOR_DATETIME_TESTS_STATE_FIXTURE_H
+#pragma once
 
-#include "test-dbus-fixture.h"
+#include "gtestdbus-fixture.h"
 
 #include "actions-mock.h"
 #include "state-mock.h"
@@ -33,13 +32,10 @@ namespace datetime {
 ****
 ***/
 
-class StateFixture: public TestDBusFixture
+class StateFixture: public GTestDBusFixture
 {
 private:
-    typedef TestDBusFixture super;
-
-public:
-    virtual ~StateFixture() =default;
+    using super = GTestDBusFixture;
 
 protected:
     std::shared_ptr<MockState> m_mock_state;
@@ -47,18 +43,18 @@ protected:
     std::shared_ptr<MockActions> m_mock_actions;
     std::shared_ptr<Actions> m_actions;
 
-    virtual void SetUp()
+    virtual void SetUp() override
     {
         super::SetUp();
 
-        m_mock_state.reset(new MockState);
+        m_mock_state.reset(new MockState{});
         m_state = std::dynamic_pointer_cast<State>(m_mock_state);
 
         m_mock_actions.reset(new MockActions(m_state));
         m_actions = std::dynamic_pointer_cast<Actions>(m_mock_actions);
     }
 
-    virtual void TearDown()
+    virtual void TearDown() override
     {
         m_actions.reset();
         m_mock_actions.reset();
@@ -68,7 +64,6 @@ protected:
 
         super::TearDown();
     }
-
 };
 
 /***
@@ -79,4 +74,3 @@ protected:
 } // namespace indicator
 } // namespace unity
 
-#endif /* INDICATOR_DATETIME_TESTS_STATE_FIXTURE_H */

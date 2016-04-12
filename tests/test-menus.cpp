@@ -54,6 +54,10 @@ protected:
         m_menus.clear();
         m_menu_factory.reset();
 
+        GError* error {};
+        g_dbus_connection_close_sync(m_bus, nullptr, &error);
+        g_assert_no_error(error);
+
         super::TearDown();
     }
 
