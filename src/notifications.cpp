@@ -292,16 +292,26 @@ public:
         uuid_unparse(message_uuid, uuid_buf);
         const std::string message_id(uuid_buf);
 
+#if 0
         // use full icon path name, "calendar-app" does not work with themed icons
         auto icon_file = g_file_new_for_path(calendar_app_icon().c_str());
         // messaging_menu_message_new: will take control of icon object
         GIcon *icon = g_file_icon_new(icon_file);
         g_object_unref(icon_file);
+#else
+#endif
 
         // check if source exists
         if (!messaging_menu_app_has_source(m_messaging_app.get(), m_app_name.c_str()))
-            messaging_menu_app_append_source(m_messaging_app.get(), m_app_name.c_str(), nullptr, "Calendar");
+        {
+            auto icon = g_themed_icon_new_with_default_fallbacks(data.m_icon_name.c_str());
+            messaging_menu_app_append_source(m_messaging_app.get(),
+                                             m_app_name.c_str(),
+                                             icon,
+                                             "Calendar");
+        }
 
+        auto icon = g_themed_icon_new_with_default_fallbacks(data.m_icon_name.c_str());
         auto msg = messaging_menu_message_new(message_id.c_str(),
                                               icon,
                                               data.m_title.c_str(),
