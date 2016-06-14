@@ -1,3 +1,9 @@
+indicator-datetime (15.10+16.10.20160614-0ubuntu1) yakkety; urgency=medium
+
+  * Does not show events from non selected sources.
+
+ -- Renato Araujo Oliveira Filho <renato.filho@canonical.com>  Tue, 14 Jun 2016 15:23:16 +0000
+
 indicator-datetime (15.10+16.04.20160516.2-0ubuntu1) xenial; urgency=medium
 
   [ Charles Kerr ]
