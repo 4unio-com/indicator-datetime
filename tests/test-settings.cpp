@@ -237,5 +237,4 @@ TEST_F(SettingsFixture, MutedApps)
     TestBoolProperty(m_gsettings_cal_notification, m_settings->cal_notification_sounds, SETTINGS_NOTIFY_SOUNDS_KEY);
     TestBoolProperty(m_gsettings_cal_notification, m_settings->cal_notification_vibrations, SETTINGS_NOTIFY_VIBRATIONS_KEY);
     TestBoolProperty(m_gsettings_cal_notification, m_settings->cal_notification_bubbles, SETTINGS_NOTIFY_BUBBLES_KEY);
-    TestBoolProperty(m_gsettings_cal_notification, m_settings->cal_notification_list, SETTINGS_NOTIFY_LIST_KEY);
 }

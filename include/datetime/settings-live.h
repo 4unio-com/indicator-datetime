@@ -69,7 +69,6 @@ private:
     void update_cal_notification_sounds();
     void update_cal_notification_vibrations();
     void update_cal_notification_bubbles();
-    void update_cal_notification_list();
     void update_vibrate_silent_mode();
 
     GSettings* m_settings;
