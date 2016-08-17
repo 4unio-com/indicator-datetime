@@ -97,10 +97,7 @@ public:
         const bool interactive = appointment.is_ubuntu_alarm() && m_engine->supports_actions();
 
         // force the system to stay awake
-        std::shared_ptr<uin::Awake> awake;
-        if (appointment.is_ubuntu_alarm() || calendar_bubbles_enabled() || calendar_list_enabled()) {
-            awake = std::make_shared<uin::Awake>(m_engine->app_name());
-        }
+        std::shared_ptr<uin::Awake> awake = std::make_shared<uin::Awake>(m_engine->app_name());
 
         // calendar events are muted in silent mode; alarm clocks never are
         std::shared_ptr<uin::Sound> sound;
@@ -185,7 +182,6 @@ public:
         }
 
         b.set_show_notification_bubble(appointment.is_ubuntu_alarm() || calendar_bubbles_enabled());
-        b.set_post_to_messaging_menu(appointment.is_ubuntu_alarm() || calendar_list_enabled());
 
         const auto key = m_engine->show(b);
         if (key)
@@ -212,11 +208,6 @@ private:
     bool calendar_bubbles_enabled() const
     {
         return m_settings->cal_notification_bubbles.get();
-    }
-
-    bool calendar_list_enabled() const
-    {
-        return m_settings->cal_notification_list.get();
     }
 
     bool vibrate_in_silent_mode_enabled() const

@@ -69,7 +69,6 @@ LiveSettings::LiveSettings():
     update_cal_notification_sounds();
     update_cal_notification_vibrations();
     update_cal_notification_bubbles();
-    update_cal_notification_list();
     update_vibrate_silent_mode();
 
     // now listen for clients to change the properties s.t. we can sync update GSettings
@@ -173,10 +172,6 @@ LiveSettings::LiveSettings():
 
     cal_notification_bubbles.changed().connect([this](bool value){
         g_settings_set_boolean(m_settings_cal_notification, SETTINGS_NOTIFY_BUBBLES_KEY, value);
-    });
-
-    cal_notification_list.changed().connect([this](bool value){
-        g_settings_set_boolean(m_settings_cal_notification, SETTINGS_NOTIFY_LIST_KEY, value);
     });
 
     vibrate_silent_mode.changed().connect([this](bool value){
@@ -328,11 +323,6 @@ void LiveSettings::update_cal_notification_bubbles()
     cal_notification_bubbles.set(g_settings_get_boolean(m_settings_cal_notification, SETTINGS_NOTIFY_BUBBLES_KEY));
 }
 
-void LiveSettings::update_cal_notification_list()
-{
-    cal_notification_list.set(g_settings_get_boolean(m_settings_cal_notification, SETTINGS_NOTIFY_LIST_KEY));
-}
-
 void LiveSettings::update_vibrate_silent_mode()
 {
     vibrate_silent_mode.set(g_settings_get_boolean(m_settings_general_notification, SETTINGS_VIBRATE_SILENT_KEY));
@@ -360,8 +350,6 @@ void LiveSettings::update_key_cal_notification(const std::string& key)
         update_cal_notification_vibrations();
     else if (key == SETTINGS_NOTIFY_BUBBLES_KEY)
         update_cal_notification_bubbles();
-    else if (key == SETTINGS_NOTIFY_LIST_KEY)
-        update_cal_notification_list();
 }
 
 /***

@@ -60,6 +60,5 @@ TimeFormatMode;
 #define SETTINGS_NOTIFY_SOUNDS_KEY      "use-sounds-notifications"
 #define SETTINGS_NOTIFY_VIBRATIONS_KEY  "use-vibrations-notifications"
 #define SETTINGS_NOTIFY_BUBBLES_KEY     "use-bubbles-notifications"
-#define SETTINGS_NOTIFY_LIST_KEY        "use-list-notifications"
 
 #endif // INDICATOR_DATETIME_SETTINGS_SHARED

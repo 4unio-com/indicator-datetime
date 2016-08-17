@@ -63,7 +63,6 @@ TEST_F(NotificationFixture, InteractiveDuration)
   settings->cal_notification_sounds.set(true);
   settings->cal_notification_vibrations.set(true);
   settings->cal_notification_bubbles.set(true);
-  settings->cal_notification_list.set(true);
 
   make_interactive();
 
@@ -160,7 +159,6 @@ TEST_F(NotificationFixture,DefaultSounds)
   settings->cal_notification_sounds.set(true);
   settings->cal_notification_vibrations.set(true);
   settings->cal_notification_bubbles.set(true);
-  settings->cal_notification_list.set(true);
 
   const struct {
       Appointment appointment;

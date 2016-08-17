@@ -62,7 +62,6 @@ public:
     std::function<void(const std::string&)> m_closed_callback;
     std::function<void()> m_timeout_callback;
     bool m_show_notification_bubble;
-    bool m_post_to_messaging_menu;
 };
 
 Builder::Builder():
@@ -132,12 +131,6 @@ void
 Builder::set_show_notification_bubble (bool show)
 {
   impl->m_show_notification_bubble = show;
-}
-
-void
-Builder::set_post_to_messaging_menu (bool post)
-{
-  impl->m_post_to_messaging_menu = post;
 }
 
 /***
@@ -301,10 +294,6 @@ public:
 
     std::string post(const Builder::Impl& data)
     {
-        if (!data.m_post_to_messaging_menu) {
-            return "";
-        }
-
         if (!m_messaging_app) {
             return std::string();
         }
