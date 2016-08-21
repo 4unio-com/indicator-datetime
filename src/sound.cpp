@@ -167,7 +167,6 @@ public:
             pa_operation *o;
 
             /* Get default sink info */
-            g_critical("pa_context_get_sink_info_by_name");
             o = pa_context_get_sink_info_by_name(m_context,
                                                  m_default_sink_name.c_str(),
                                                  get_sink_info_by_name_callback,
