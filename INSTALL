@@ -27,6 +27,7 @@ build dependencies for indicator-datetime-service
  * libnotify >= 0.7.6
  * url-dispatcher-1 >= 1
  * json-glib-1.0 >= 0.16.2
+ * libpulse
 
 
 Additional build dependencies for the gnome-control-center panel:

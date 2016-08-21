@@ -45,6 +45,7 @@ public:
     ~Sound();
 
 private:
+    class PulseImpl;
     class Impl;
     std::unique_ptr<Impl> impl;
 };
