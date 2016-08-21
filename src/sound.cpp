@@ -78,6 +78,31 @@ public:
 
     void handle_sink_info(const pa_sink_info *info)
     {
+        if (!m_old_active_port_name.empty())
+        {
+            /* Check if old active port is still available and inactive */
+            bool old_active_port_found = false;
+            for (unsigned int i = 0; i < info->n_ports; i++)
+            {
+                if (info->ports[i]->available != PA_PORT_AVAILABLE_NO)
+                {
+                    if (strcmp(info->ports[i]->name, m_old_active_port_name.c_str()) == 0)
+                        old_active_port_found = true;
+                }
+            }
+            if (!old_active_port_found ||
+                strcmp(info->active_port->name, m_old_active_port_name.c_str()) == 0)
+            {
+                m_old_active_port_name = "";
+            }
+            else if (strcmp(info->active_port->name, "output-speaker") != 0 &&
+                     strcmp(info->active_port->name, "output-speaker+wired_headphone") != 0)
+            {
+                // looks like port changed while playing
+                m_old_active_port_name = "";
+            }
+        }
+
         if (m_set_preferred_sink_port)
             internal_set_preferred_sink_port(info);
     }
@@ -135,20 +160,34 @@ public:
             m_set_preferred_sink_port &&
             !m_old_active_port_name.empty())
         {
-            pa_threaded_mainloop_lock(m_mainloop);
-
-            g_debug("Restoring pulseaudio sink '%s' port to '%s'", m_default_sink_name.c_str(), m_old_active_port_name.c_str());
             m_set_preferred_sink_port = false;
 
+            pa_threaded_mainloop_lock(m_mainloop);
+
             pa_operation *o;
-            o = pa_context_set_sink_port_by_name(m_context,
+
+            /* Get default sink info */
+            g_critical("pa_context_get_sink_info_by_name");
+            o = pa_context_get_sink_info_by_name(m_context,
                                                  m_default_sink_name.c_str(),
-                                                 m_old_active_port_name.c_str(),
-                                                 success_callback, this);
-            if (!handle_operation(o, "pa_context_set_sink_port_by_name"))
+                                                 get_sink_info_by_name_callback,
+                                                 this);
+            if (!handle_operation(o, "pa_context_get_sink_info_by_name"))
                 return false;
 
-            m_old_active_port_name = "";
+            if (!m_old_active_port_name.empty())
+            {
+                g_debug("Restoring pulseaudio sink '%s' port to '%s'", m_default_sink_name.c_str(), m_old_active_port_name.c_str());
+
+                o = pa_context_set_sink_port_by_name(m_context,
+                                                     m_default_sink_name.c_str(),
+                                                     m_old_active_port_name.c_str(),
+                                                     success_callback, this);
+                if (!handle_operation(o, "pa_context_set_sink_port_by_name"))
+                    return false;
+
+                m_old_active_port_name = "";
+            }
 
             pa_threaded_mainloop_unlock(m_mainloop);
         }
@@ -322,10 +361,13 @@ private:
 
         for (unsigned int i = 0; i < info->n_ports; i++)
         {
-            if (strcmp(info->ports[i]->name, "output-speaker") == 0)
-                speaker_port = info->ports[i];
-            else if (strcmp(info->ports[i]->name, "output-speaker+wired_headphone") == 0)
-                speaker_wired_headphone_port = info->ports[i];
+            if (info->ports[i]->available != PA_PORT_AVAILABLE_NO)
+            {
+                if (strcmp(info->ports[i]->name, "output-speaker") == 0)
+                    speaker_port = info->ports[i];
+                else if (strcmp(info->ports[i]->name, "output-speaker+wired_headphone") == 0)
+                    speaker_wired_headphone_port = info->ports[i];
+            }
         }
 
         if (speaker_wired_headphone_port != nullptr)
