@@ -398,6 +398,9 @@ public:
 
     ~Impl()
     {
+        if (m_pulse_timeout != 0)
+            g_source_remove(m_pulse_timeout);
+
         if (m_pulse != nullptr)
             delete m_pulse;
 
@@ -425,6 +428,20 @@ private:
         return out_range_lo + (pct * (out_range_hi - out_range_lo));
     }
 
+    static gboolean pulse_timer_callback(gpointer gself)
+    {
+        auto self = static_cast<Impl*>(gself);
+
+        if (self->m_pulse == nullptr)
+            self->m_pulse = new PulseImpl();
+
+        /* Set preferred sink port */
+        self->m_pulse->set_preferred_sink_port();
+
+        self->m_pulse_timeout = 0;
+        return false;
+    }
+
     static gboolean bus_callback(GstBus*, GstMessage* msg, gpointer gself)
     {
         auto self = static_cast<Impl*>(gself);
@@ -443,7 +460,7 @@ private:
         }
         else if (message_type == GST_MESSAGE_STREAM_START)
         {
-            /* Set the media role and prefered sink port if audio sink is pulsesink */
+            /* Set the media role and pulse timer if audio sink is pulsesink */
             GstElement *audio_sink = nullptr;
             g_object_get(self->m_play, "audio-sink", &audio_sink, nullptr);
             if (audio_sink)
@@ -458,9 +475,10 @@ private:
                     gst_structure_free(props);
                     g_free(role_str);
 
-                    if (self->m_pulse == nullptr)
-                        self->m_pulse = new PulseImpl();
-                    self->m_pulse->set_preferred_sink_port();
+                    /* Set preferred sink port after 5 seconds */
+                    if (self->m_pulse == nullptr &&
+                        self->m_pulse_timeout == 0)
+                        self->m_pulse_timeout = g_timeout_add_seconds(5, pulse_timer_callback, self);
                 }
                 gst_object_unref(audio_sink);
             }
@@ -479,6 +497,7 @@ private:
     const bool m_loop;
     guint m_watch_source = 0;
     GstElement* m_play = nullptr;
+    guint m_pulse_timeout = 0;
     PulseImpl* m_pulse = nullptr;
 };
 
