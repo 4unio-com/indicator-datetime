@@ -26,8 +26,6 @@
 /* PulseImpl */
 #include <sys/types.h>
 #include <unistd.h>
-#include <sstream>
-#include <cstring>
 #include <pulse/pulseaudio.h>
 
 namespace unity {
@@ -46,65 +44,22 @@ class Sound::PulseImpl
 public:
 
     PulseImpl()
-        : m_mainloop(0),
-          m_context(0),
-          m_default_sink_name(""),
-          m_old_active_port_name("")
-
     {
         m_mainloop = pa_threaded_mainloop_new();
-        if (m_mainloop == 0) {
+        if (m_mainloop == nullptr) {
             g_warning("Unable to create pulseaudio mainloop");
-            m_mainloop = 0;
+            m_mainloop = nullptr;
             return;
         }
 
         if (pa_threaded_mainloop_start(m_mainloop) != 0) {
             g_warning("Unable to start pulseaudio mainloop");
             pa_threaded_mainloop_free(m_mainloop);
-            m_mainloop = 0;
+            m_mainloop = nullptr;
             return;
         }
 
         create_context();
-    }
-
-    pa_threaded_mainloop *mainloop() { return m_mainloop; }
-
-    void handle_server_info(const pa_server_info *info)
-    {
-        m_default_sink_name = info->default_sink_name;
-    }
-
-    void handle_sink_info(const pa_sink_info *info)
-    {
-        if (!m_old_active_port_name.empty())
-        {
-            /* Check if old active port is still available and inactive */
-            bool old_active_port_found = false;
-            for (unsigned int i = 0; i < info->n_ports; i++)
-            {
-                if (info->ports[i]->available != PA_PORT_AVAILABLE_NO)
-                {
-                    if (strcmp(info->ports[i]->name, m_old_active_port_name.c_str()) == 0)
-                        old_active_port_found = true;
-                }
-            }
-            if (!old_active_port_found ||
-                strcmp(info->active_port->name, m_old_active_port_name.c_str()) == 0)
-            {
-                m_old_active_port_name = "";
-            }
-            else if (strcmp(info->active_port->name, "output-speaker") != 0 &&
-                     strcmp(info->active_port->name, "output-speaker+wired_headphone") != 0)
-            {
-                // looks like port changed while playing
-                m_old_active_port_name = "";
-            }
-        }
-
-        if (m_set_preferred_sink_port)
-            internal_set_preferred_sink_port(info);
     }
 
     bool set_preferred_sink_port()
@@ -153,7 +108,66 @@ public:
         return true;
     }
 
-    bool restore_sink_port()
+    ~PulseImpl()
+    {
+        restore_sink_port();
+        release_context();
+
+        if (m_mainloop) {
+            pa_threaded_mainloop_stop(m_mainloop);
+            pa_threaded_mainloop_free(m_mainloop);
+            m_mainloop = nullptr;
+        }
+    }
+
+
+private:
+    static void success_callback(pa_context* /*context*/, int /*success*/, void *userdata)
+    {
+        auto self = static_cast<PulseImpl*>(userdata);
+        pa_threaded_mainloop_signal(self->mainloop(), 0);
+    }
+
+    static void set_state_callback(pa_context* /*context*/, void *userdata)
+    {
+        auto self = static_cast<PulseImpl*>(userdata);
+        pa_threaded_mainloop_signal(self->mainloop(), 0);
+    }
+
+    static void get_server_info_callback(pa_context* /*context*/, const pa_server_info *info, void *userdata)
+    {
+        auto self = static_cast<PulseImpl*>(userdata);
+        self->handle_server_info(info);
+        pa_threaded_mainloop_signal(self->mainloop(), 0);
+    }
+
+    static void get_sink_info_by_name_callback(pa_context* /*context*/, const pa_sink_info *info, int eol, void *userdata)
+    {
+        if (eol)
+            return;
+
+        auto self = static_cast<PulseImpl*>(userdata);
+        self->handle_sink_info(info);
+        pa_threaded_mainloop_signal(self->mainloop(), 0);
+    }
+
+    pa_threaded_mainloop *mainloop() { return m_mainloop; } // this can be made public
+
+    void handle_server_info(const pa_server_info *info) // this can be made public
+    {
+        m_default_sink_name = info->default_sink_name;
+    }
+
+    void handle_sink_info(const pa_sink_info *info) // this can be made public
+    {
+        if (!m_old_active_port_name.empty())
+            internal_reset_old_active_sink_port(info);
+
+        if (m_set_preferred_sink_port)
+            internal_set_preferred_sink_port(info);
+    }
+
+    bool restore_sink_port() // this can be made public
     {
         /* If default sink port was changed, restore it */
         if (m_context &&
@@ -194,58 +208,6 @@ public:
         return true;
     }
 
-    ~PulseImpl()
-    {
-        restore_sink_port();
-        release_context();
-
-        if (m_mainloop) {
-            pa_threaded_mainloop_stop(m_mainloop);
-            pa_threaded_mainloop_free(m_mainloop);
-            m_mainloop = 0;
-        }
-    }
-
-
-private:
-    static void success_callback(pa_context *context, int success, void *userdata)
-    {
-        (void)context; //unused
-        (void)success; //unused
-
-        PulseImpl *self = static_cast<PulseImpl *>(userdata);
-        pa_threaded_mainloop_signal(self->mainloop(), 0);
-    }
-
-    static void set_state_callback(pa_context *context, void *userdata)
-    {
-        (void)context; //unused
-
-        PulseImpl *self = static_cast<PulseImpl *>(userdata);
-        pa_threaded_mainloop_signal(self->mainloop(), 0);
-    }
-
-    static void get_server_info_callback(pa_context *context, const pa_server_info *info, void *userdata)
-    {
-        (void)context; //unused
-
-        PulseImpl *self = static_cast<PulseImpl *>(userdata);
-        self->handle_server_info(info);
-        pa_threaded_mainloop_signal(self->mainloop(), 0);
-    }
-
-    static void get_sink_info_by_name_callback(pa_context *context, const pa_sink_info *info, int eol, void *userdata)
-    {
-        (void)context; //unused
-
-        if (eol)
-            return;
-
-        PulseImpl *self = static_cast<PulseImpl *>(userdata);
-        self->handle_sink_info(info);
-        pa_threaded_mainloop_signal(self->mainloop(), 0);
-    }
-
     bool create_context()
     {
         bool keepGoing = true;
@@ -254,16 +216,12 @@ private:
         if (m_context)
             return true;
 
-        pa_mainloop_api *m_mainloop_api;
-        m_mainloop_api = pa_threaded_mainloop_get_api(m_mainloop);
+        auto mainloop_api = pa_threaded_mainloop_get_api(m_mainloop);
 
         pa_threaded_mainloop_lock(m_mainloop);
 
-        std::stringstream pid;
-        pid << ::getpid();
-        std::string name = "QtmPulseContext:";
-        name.append(pid.str());
-        m_context = pa_context_new(m_mainloop_api, name.c_str());
+        const auto name = "QtmPulseContext:" + std::to_string(::getpid());
+        m_context = pa_context_new(mainloop_api, name.c_str());
         if (!m_context) {
             g_critical("Unable to create new pulseaudio context");
             pa_threaded_mainloop_unlock(m_mainloop);
@@ -312,7 +270,7 @@ private:
         if (!connected) {
             if (m_context) {
                 pa_context_unref(m_context);
-                m_context = 0;
+                m_context = nullptr;
             }
         }
 
@@ -346,54 +304,77 @@ private:
             pa_context_disconnect(m_context);
             pa_context_unref(m_context);
             pa_threaded_mainloop_unlock(m_mainloop);
-            m_context = 0;
+            m_context = nullptr;
         }
     }
 
-    bool internal_set_preferred_sink_port(const pa_sink_info *info)
+    void internal_set_preferred_sink_port(const pa_sink_info *info)
     {
         /* Prefer speakers over headphones when playing audio (LP: #1364647) */
         pa_sink_port_info* active_port = info->active_port;
         pa_sink_port_info* speaker_port = nullptr;
         pa_sink_port_info* speaker_wired_headphone_port = nullptr;
-        pa_sink_port_info* preferred_port = nullptr;
 
         for (unsigned int i = 0; i < info->n_ports; i++)
         {
             if (info->ports[i]->available != PA_PORT_AVAILABLE_NO)
             {
-                if (strcmp(info->ports[i]->name, "output-speaker") == 0)
+                if (g_strcmp0(info->ports[i]->name, "output-speaker") == 0)
                     speaker_port = info->ports[i];
-                else if (strcmp(info->ports[i]->name, "output-speaker+wired_headphone") == 0)
+                else if (g_strcmp0(info->ports[i]->name, "output-speaker+wired_headphone") == 0)
                     speaker_wired_headphone_port = info->ports[i];
             }
         }
 
+        pa_sink_port_info* preferred_port = nullptr;
         if (speaker_wired_headphone_port != nullptr)
             preferred_port = speaker_wired_headphone_port;
         else
             preferred_port = speaker_port;
 
         if (preferred_port != nullptr &&
-            strcmp(active_port->name, "output-speaker") != 0 &&
+            g_strcmp0(active_port->name, "output-speaker") != 0 &&
             active_port != preferred_port)
         {
             m_old_active_port_name = active_port->name;
             m_preferred_port_name = preferred_port->name;
         }
+    }
 
-        return true;
+    void internal_reset_old_active_sink_port(const pa_sink_info *info)
+    {
+        /* Check if old active port is still available and inactive */
+        bool old_active_port_found = false;
+        for (unsigned int i = 0; i < info->n_ports; i++)
+        {
+            if (info->ports[i]->available != PA_PORT_AVAILABLE_NO)
+            {
+                if (g_strcmp0(info->ports[i]->name, m_old_active_port_name.c_str()) == 0)
+                    old_active_port_found = true;
+            }
+        }
+        if (!old_active_port_found ||
+            g_strcmp0(info->active_port->name, m_old_active_port_name.c_str()) == 0)
+        {
+            m_old_active_port_name = "";
+        }
+        else if (g_strcmp0(info->active_port->name, "output-speaker") != 0 &&
+                 g_strcmp0(info->active_port->name, "output-speaker+wired_headphone") != 0)
+        {
+            // looks like port changed while playing
+            m_old_active_port_name = "";
+        }
     }
 
     /***
     ****
     ***/
 
-    pa_threaded_mainloop *m_mainloop;
-    pa_context *m_context;
-    std::string m_default_sink_name;
-    std::string m_old_active_port_name;
-    std::string m_preferred_port_name;
+    pa_threaded_mainloop *m_mainloop = nullptr;
+    pa_context *m_context = nullptr;
+    std::string m_default_sink_name = "";
+    std::string m_old_active_port_name = "";
+    std::string m_preferred_port_name = "";
     bool m_set_preferred_sink_port = false;
 };
 
@@ -480,7 +461,7 @@ private:
         self->m_pulse->set_preferred_sink_port();
 
         self->m_pulse_timeout = 0;
-        return false;
+        return G_SOURCE_REMOVE;
     }
 
     static gboolean bus_callback(GstBus*, GstMessage* msg, gpointer gself)
