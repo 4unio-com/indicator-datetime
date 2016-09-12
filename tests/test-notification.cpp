@@ -189,7 +189,7 @@ TEST_F(NotificationFixture,Notification)
         // test that Notify was called with the appointment's body
         const gchar* body {nullptr};
         g_variant_get_child(notify_calls[0].params, 4, "&s", &body);
-        ASSERT_STREQ(test_appt.appt.summary.c_str(), body);
+        ASSERT_STREQ(test_appt.appt.alarms[0].text.c_str(), body);
     }
   }
   }
