@@ -1,3 +1,11 @@
+indicator-datetime (15.10+16.10.20160912.1-0ubuntu1) yakkety; urgency=medium
+
+  [ Charles Kerr ]
+  * Use the valarm 'description' property correctly when displaying
+    alarm popups (LP: #1622682)
+
+ -- Arthur Renato Mello <arthur.mello@canonical.com>  Mon, 12 Sep 2016 23:14:58 +0000
+
 indicator-datetime (15.10+16.10.20160820.1-0ubuntu1) yakkety; urgency=medium
 
   * No change rebuild for UAL ABI change
