@@ -145,7 +145,7 @@ TEST_F(NotificationFixture,Notification)
 
     // run the test
     auto snap = create_snap(ne, sb, settings);
-    (*snap)(test_appt.appt, appt.alarms.front(), func);
+    (*snap)(test_appt.appt, test_appt.appt.alarms.front(), func);
 
     // confirm that the notification was as expected
     if (expected_notify_called) {
