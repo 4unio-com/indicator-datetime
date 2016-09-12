@@ -86,7 +86,7 @@ public:
     {
         // If calendar notifications are disabled, don't show them
         if (!appointment.is_ubuntu_alarm() && !calendar_notifications_are_enabled()) {
-            g_debug("Skipping disabled calendar event '%s' notification", appointment.summary.c_str());
+            g_debug("Skipping disabled calendar event '%s' notification '%s'", appointment.summary.c_str(), alarm.text.c_str());
             return;
         }
 
@@ -127,7 +127,7 @@ public:
         // show a notification...
         const auto minutes = std::chrono::minutes(m_settings->alarm_duration.get());
         uin::Builder b;
-        b.set_body (appointment.summary);
+        b.set_body (!alarm.text.empty() ? alarm.text : appointment.summary);
         b.set_icon_name (appointment.is_ubuntu_alarm() ? "alarm-clock" : "calendar-app");
         b.add_hint (uin::Builder::HINT_NONSHAPED_ICON);
         b.set_start_time (appointment.begin.to_unix());
