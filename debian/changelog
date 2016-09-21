@@ -1,3 +1,11 @@
+indicator-datetime (15.10+16.10.20160921-0ubuntu1) yakkety; urgency=medium
+
+  * Adding a systemd user unit
+  * Use an explicit registry object so that it gets free'd when the
+    function exits
+
+ -- Ted Gould <ted@gould.cx>  Wed, 21 Sep 2016 22:12:54 +0000
+
 indicator-datetime (15.10+16.10.20160820.1-0ubuntu1) yakkety; urgency=medium
 
   * No change rebuild for UAL ABI change
