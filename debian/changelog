@@ -1,3 +1,11 @@
+indicator-datetime (15.10+17.04.20161124-0ubuntu1) zesty; urgency=medium
+
+  [ Michael Terry ]
+  * Run inside a snap by prefixing hard coded paths with $SNAP. (LP:
+    #1629009)
+
+ -- Albert Astals Cid <albert.astals@canonical.com>  Thu, 24 Nov 2016 12:11:39 +0000
+
 indicator-datetime (15.10+17.04.20161116.1-0ubuntu1) zesty; urgency=medium
 
   * UpcomingPlanner: don't get events from the day before of the
