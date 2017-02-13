@@ -7,23 +7,9 @@ pkg_check_modules(DBUSTEST REQUIRED
                   dbustest-1>=14.04.0)
 include_directories (SYSTEM ${DBUSTEST_INCLUDE_DIRS})
 
-# build the necessary schemas
-set_directory_properties (PROPERTIES
-                          ADDITIONAL_MAKE_CLEAN_FILES gschemas.compiled)
-set_source_files_properties (gschemas.compiled GENERATED)
-
 # GSettings:
-# compile the indicator-datetime schema into a gschemas.compiled file in this directory,
-# and help the tests to find that file by setting -DSCHEMA_DIR
-set (SCHEMA_DIR ${CMAKE_CURRENT_BINARY_DIR})
+set (SCHEMA_DIR ${CMAKE_BINARY_DIR}/data)
 add_definitions(-DSCHEMA_DIR="${SCHEMA_DIR}")
-execute_process (COMMAND ${PKG_CONFIG_EXECUTABLE} gio-2.0 --variable glib_compile_schemas
-                 OUTPUT_VARIABLE COMPILE_SCHEMA_EXECUTABLE
-                 OUTPUT_STRIP_TRAILING_WHITESPACE)
-add_custom_command (OUTPUT gschemas.compiled
-                    DEPENDS ${CMAKE_BINARY_DIR}/data/com.canonical.indicator.datetime.gschema.xml
-                    COMMAND cp -f ${CMAKE_BINARY_DIR}/data/*gschema.xml ${SCHEMA_DIR}
-                    COMMAND ${COMPILE_SCHEMA_EXECUTABLE} ${SCHEMA_DIR})
 
 # look for headers in our src dir, and also in the directories where we autogenerate files...
 include_directories (${CMAKE_SOURCE_DIR}/src)
@@ -38,7 +24,7 @@ add_definitions (-DG_LOG_DOMAIN="Indicator-Datetime")
 function(add_test_by_name name)
   set (TEST_NAME ${name})
   set (COVERAGE_TEST_TARGETS ${COVERAGE_TEST_TARGETS} ${TEST_NAME} PARENT_SCOPE)
-  add_executable (${TEST_NAME} ${TEST_NAME}.cpp gschemas.compiled)
+  add_executable (${TEST_NAME} ${TEST_NAME}.cpp)
   add_test (${TEST_NAME} ${TEST_NAME})
   target_link_libraries (${TEST_NAME} indicatordatetimeservice ${DBUSTEST_LIBRARIES} ${SERVICE_DEPS_LIBRARIES} ${GTEST_LIBRARIES} ${GMOCK_LIBRARIES})
 endfunction()
@@ -77,7 +63,7 @@ function(add_eds_ics_test_by_name name)
   set (COVERAGE_TEST_TARGETS ${COVERAGE_TEST_TARGETS} ${TEST_NAME} PARENT_SCOPE)
   configure_file("${CMAKE_CURRENT_SOURCE_DIR}/${TEST_NAME}.ics.in"
                  "${CMAKE_CURRENT_BINARY_DIR}/${TEST_NAME}.ics")
-  add_executable(${TEST_NAME} ${TEST_NAME}.cpp gschemas.compiled)
+  add_executable(${TEST_NAME} ${TEST_NAME}.cpp)
   target_link_libraries (${TEST_NAME} indicatordatetimeservice ${DBUSTEST_LIBRARIES} ${SERVICE_DEPS_LIBRARIES} ${GTEST_LIBRARIES} ${GMOCK_LIBRARIES})
   add_test (${TEST_NAME}
             ${CMAKE_CURRENT_SOURCE_DIR}/run-eds-ics-test.sh
@@ -106,7 +92,7 @@ add_eds_ics_test_by_name(test-eds-ics-repeating-events-with-individual-change)
 #function(add_dbusmock_test_by_name name)
 #  set (TEST_NAME ${name})
 #  set (COVERAGE_TEST_TARGETS ${COVERAGE_TEST_TARGETS} ${TEST_NAME} PARENT_SCOPE)
-#  add_executable (${TEST_NAME} ${TEST_NAME}.cpp gschemas.compiled)
+#  add_executable (${TEST_NAME} ${TEST_NAME}.cpp)
 #  add_test (${TEST_NAME} ${TEST_NAME})
 #  target_link_libraries (${TEST_NAME} indicatordatetimeservice ${SERVICE_DEPS_LIBRARIES} ${DBUSTEST_LIBRARIES} ${GTEST_LIBRARIES} ${GMOCK_LIBRARIES})
 #endfunction()

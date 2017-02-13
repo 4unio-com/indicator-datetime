@@ -2,19 +2,20 @@
 ##  GSettings schema
 ##
 
-include (UseGSettings)
+find_package (GSettings REQUIRED)
 set (SCHEMA_NAME "com.canonical.indicator.datetime.gschema.xml")
 set (SCHEMA_FILE_IN_IN "${CMAKE_CURRENT_SOURCE_DIR}/${SCHEMA_NAME}.in.in")
 set (SCHEMA_FILE_IN    "${CMAKE_CURRENT_BINARY_DIR}/${SCHEMA_NAME}.in")
 set (SCHEMA_FILE       "${CMAKE_CURRENT_BINARY_DIR}/${SCHEMA_NAME}")
-# generate the .xml.in file so cmake constants are included
-configure_file(${SCHEMA_FILE_IN_IN} ${SCHEMA_FILE_IN})
-# generate the .xml file using intltool
-set (ENV{LC_ALL} "C")
-execute_process (COMMAND intltool-merge -quiet --xml-style --utf8 --no-translations "${SCHEMA_FILE_IN}" "${SCHEMA_FILE}")
 
-# let UseGSettings do the rest
-add_schema (${SCHEMA_FILE})
+# generate the .xml file using intltool
+# this is still necessary because intltool_merge_translations only handles
+# .desktop files (lp: #1664325)
+find_package(Intltool REQUIRED)
+execute_process (COMMAND ${INTLTOOL_MERGE_EXECUTABLE} -quiet --xml-style --utf8 --no-translations "${SCHEMA_FILE_IN_IN}" "${SCHEMA_FILE_IN}")
+configure_file(${SCHEMA_FILE_IN} ${SCHEMA_FILE})
+
+add_schema (${SCHEMA_NAME})
 
 ##
 ##  Systemd Unit File
