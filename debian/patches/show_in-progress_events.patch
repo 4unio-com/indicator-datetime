@@ -11,14 +11,26 @@
      Menu (Profile profile_in, const std::string& name_in);
 --- a/src/menu.cpp
 +++ b/src/menu.cpp
-@@ -227,8 +227,8 @@
+@@ -226,14 +226,15 @@
+         // we pick events starting from the beginning of that clicked day.
          const auto now = m_state->clock->localtime();
          const auto calendar_day = m_state->calendar_month->month().get();
-         const auto begin = DateTime::is_same_day(now, calendar_day)
+-        const auto begin = DateTime::is_same_day(now, calendar_day)
 -            ? now.start_of_minute()
 -            : calendar_day.start_of_day();
-+            ? calendar_day.start_of_day()
-+            : now.start_of_minute();
++        if ((profile() == Desktop) && !DateTime::is_same_day(now, calendar_day))
++            begin = calendar_day.start_of_day();
++        else
++            begin = now.start_of_minute();
  
-         auto upcoming = get_display_appointments(
-             m_state->calendar_upcoming->appointments().get(),
+-        auto upcoming = get_display_appointments(
+-            m_state->calendar_upcoming->appointments().get(),
+-            begin
+-        );
++        std::vector<Appointment> upcoming;
++        for(const auto& a : m_state->calendar_upcoming->appointments().get())
++            if (begin <= a.end)
++                upcoming.push_back(a);
+ 
+         if (m_upcoming != upcoming)
+         {
